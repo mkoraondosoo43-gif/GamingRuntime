@@ -256,11 +256,6 @@ void Runtime::stop_game() {
     }
 
     render_frame_.reset();
-    if (renderer_ && renderer_started_) {
-        renderer_->shutdown();
-        renderer_started_ = false;
-    }
-
     game_started_ = false;
 }
 
