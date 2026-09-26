@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(GamingRuntime VERSION 2.3.0 LANGUAGES CXX)
+project(GamingRuntime VERSION 2.4.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,6 +19,7 @@ add_library(gaming_runtime
     runtime/src/display.cpp
     $<$<PLATFORM_ID:Android>:runtime/src/android_surface_display.cpp>
     $<$<PLATFORM_ID:Android>:runtime/src/android_input.cpp>
+    $<$<PLATFORM_ID:Android>:runtime/src/android_runtime_host.cpp>
 )
 
 target_include_directories(gaming_runtime
