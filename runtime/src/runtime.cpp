@@ -149,6 +149,12 @@ bool Runtime::load_game(const GamePackage& package) {
     audio_.reset();
     audio_memory_bytes_ = 0;
     audio_started_ = false;
+    if (display_ && display_started_) {
+        display_->shutdown();
+    }
+    display_.reset();
+    display_memory_bytes_ = 0;
+    display_started_ = false;
     input_manager_.clear();
     game_loaded_ = true;
     return true;
@@ -357,6 +363,10 @@ void Runtime::tick(double delta_seconds) {
         if (audio_ && audio_started_) {
             audio_->submit(audio_frame_);
         }
+
+        if (display_ && display_started_) {
+            display_->present();
+        }
     }
 }
 
@@ -472,6 +482,49 @@ bool Runtime::attach_audio(std::unique_ptr<AudioBackend> audio,
         audio_.reset();
         audio_memory_bytes_ = 0;
         audio_started_ = false;
+        return false;
+    }
+
+    return true;
+}
+
+bool Runtime::attach_display(std::unique_ptr<DisplayBackend> display,
+                              std::uint32_t width,
+                              std::uint32_t height) {
+    if (!game_loaded_ || game_started_ || !display ||
+        width == 0 || height == 0) {
+        return false;
+    }
+
+    if (!display->initialize(width, height)) {
+        return false;
+    }
+
+    const std::uint64_t new_bytes = display->memory_bytes();
+    const std::uint64_t old_bytes =
+        display_started_ ? display_memory_bytes_ : 0;
+
+    const std::uint64_t available_bytes = memory_manager_.available_bytes();
+    if (new_bytes > available_bytes &&
+        new_bytes - available_bytes > old_bytes) {
+        display->shutdown();
+        return false;
+    }
+
+    if (display_ && display_started_) {
+        display_->shutdown();
+        memory_manager_.release(old_bytes);
+    }
+
+    display_ = std::move(display);
+    display_memory_bytes_ = new_bytes;
+    display_started_ = true;
+
+    if (!memory_manager_.reserve(new_bytes)) {
+        display_->shutdown();
+        display_.reset();
+        display_memory_bytes_ = 0;
+        display_started_ = false;
         return false;
     }
 
