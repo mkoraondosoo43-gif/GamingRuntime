@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/game_module.h"
@@ -65,6 +66,7 @@ public:
                             const std::string& relative_path,
                             std::uint32_t width,
                             std::uint32_t height);
+    bool unload_texture(std::uint32_t resource_id);
 
     void set_input_button(std::size_t button, bool down);
     void set_input_axis(std::size_t axis, float value);
@@ -81,6 +83,7 @@ private:
     RenderFrame render_frame_;
     InputManager input_manager_;
     MemoryManager memory_manager_;
+    std::unordered_map<std::uint32_t, std::uint64_t> texture_memory_;
     std::unique_ptr<Renderer> renderer_;
     bool renderer_started_ = false;
     bool game_loaded_ = false;
