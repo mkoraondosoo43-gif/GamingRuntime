@@ -81,6 +81,7 @@ int main() {
             "name": "Runtime Demo",
             "version": "0.5.0",
             "entry_point": "main",
+            "bytecode": "game.bc",
             "assets": "assets",
             "estimated_memory_mb": 128
         })";
