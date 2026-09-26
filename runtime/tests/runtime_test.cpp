@@ -77,6 +77,14 @@ int main() {
     assert(runtime.loaded_game().assets_directory ==
            assets.lexically_normal().string());
     assert(runtime.can_run_locally());
+    runtime.set_input_button(2, true);
+    runtime.set_input_axis(0, 1.5f);
+    runtime.set_pointer_input(120.0f, 80.0f, true);
+    assert(runtime.input_state().button_down(2));
+    assert(runtime.input_state().axis_value(0) == 1.0f);
+    assert(runtime.input_state().pointer_x == 120.0f);
+    assert(runtime.input_state().pointer_y == 80.0f);
+    assert(runtime.input_state().pointer_down);
     assert(runtime.assets().has_asset("textures/hero.bin"));
     assert(!runtime.assets().has_asset("../game.json"));
     std::vector<std::uint8_t> asset_data;
@@ -138,6 +146,8 @@ int main() {
             frame.draw_quad(2.0f, 3.0f, 10.0f, 8.0f, 7);
             last_frame = context.frame_number;
             last_delta = context.delta_seconds;
+            assert(context.input != nullptr);
+            assert(context.input->button_down(2));
         }
 
         void shutdown() override {
