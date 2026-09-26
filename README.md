@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Android Runtime Host v2.4
+## Current milestone: Android Host App v2.5
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -34,6 +34,24 @@ The bytecode VM can:
 - run through the existing GameModule lifecycle.
 
 
+### Android host application
+
+v2.5 adds an actual Android application shell around the v2.4 runtime bridge. The app uses Android NativeActivity and an NDK shared library, so platform lifecycle callbacks supply the real ANativeWindow and AInputQueue objects directly to GamingRuntime.
+
+The host now:
+
+- creates a small runtime game package in the app's private storage;
+- loads that package through the existing storage/manifest/bytecode path;
+- attaches a built-in SoftwareRenderer when the Android surface is created;
+- starts the existing AndroidRuntimeHost;
+- forwards native window creation, resize, and destruction;
+- consumes Android input through AInputQueue and AndroidInputBridge;
+- runs the runtime frame loop on a dedicated thread;
+- shuts down the runtime and worker threads during activity destruction;
+- builds an ARM64 Android APK through Gradle in CI.
+
+The built-in demo game is only a host smoke test. It renders a moving quad through the same runtime render-frame boundary used by future game modules. It does not claim device-level performance verification.
+
 ### Android runtime host
 
 v2.4 adds an Android-only AndroidRuntimeHost lifecycle bridge. It connects an Android ANativeWindow to the runtime display boundary and connects AInputEvent objects to the existing InputManager through AndroidInputBridge.
@@ -47,7 +65,7 @@ The host supports:
 - native input event forwarding;
 - runtime start/stop/tick forwarding.
 
-The host remains a bridge rather than a game-specific UI layer. An Android application or NativeActivity remains responsible for receiving the platform lifecycle callbacks and supplying the ANativeWindow and AInputEvent objects.
+The host remains a platform bridge rather than a game-specific UI layer. The v2.5 app shell is a real Android entry point; the built-in demo exists only to exercise the runtime end-to-end. An Android application or NativeActivity remains responsible for receiving the platform lifecycle callbacks and supplying the ANativeWindow and AInputEvent objects.
 
 ### Runtime display boundary
 
