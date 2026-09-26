@@ -358,11 +358,7 @@ bool Runtime::load_texture_asset(std::uint32_t resource_id,
         return false;
     }
 
-    Texture texture{
-        .width = width,
-        .height = height,
-        .pixels = std::move(data)
-    };
+    Texture texture{width, height, std::move(data)};
 
     return renderer_->upload_texture(resource_id, texture);
 }
