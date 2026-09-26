@@ -104,6 +104,7 @@ bool Runtime::load_game(const GamePackage& package) {
     game_started_ = false;
     game_module_.reset();
     render_frame_.reset();
+    input_manager_.clear();
     game_loaded_ = true;
     return true;
 }
