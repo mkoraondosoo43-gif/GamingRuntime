@@ -279,6 +279,7 @@ int main() {
     assert(audio_ptr->submitted_frames() == 2);
     assert(audio_ptr->last_command_count() == 1);
     assert(display_ptr->presented_frames() == 2);
+    assert(display_ptr->last_framebuffer_bytes() == 1280ULL * 720ULL * 4ULL);
     assert(module_ptr->last_frame == 2);
     assert(module_ptr->last_delta > 0.0);
 
@@ -357,6 +358,13 @@ int main() {
         assert(software.width() == 32);
         assert(software.height() == 24);
         assert(software.pixels().size() == 32U * 24U * 4U);
+        const auto framebuffer = software.framebuffer();
+        assert(framebuffer.valid());
+        assert(framebuffer.width == 32);
+        assert(framebuffer.height == 24);
+        assert(framebuffer.stride_bytes == 32U * 4U);
+        assert(framebuffer.size_bytes == 32U * 24U * 4U);
+        assert(framebuffer.pixels == software.pixels().data());
         const auto& pixels = software.pixels();
         const std::size_t quad_pixel = (5U * 32U + 4U) * 4U;
         assert(pixels[quad_pixel] == 255);
