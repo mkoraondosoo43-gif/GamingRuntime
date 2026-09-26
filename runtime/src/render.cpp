@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace gaming_runtime {
 namespace {
@@ -135,6 +136,42 @@ void SoftwareRenderer::shutdown() {
     width_ = 0;
     height_ = 0;
     pixels_.clear();
+    textures_.clear();
+}
+
+bool SoftwareRenderer::register_texture(std::uint32_t resource_id, Texture texture) {
+    if (!initialized_ || resource_id == 0 || !texture.valid()) {
+        return false;
+    }
+
+    for (auto& entry : textures_) {
+        if (entry.first == resource_id) {
+            entry.second = std::move(texture);
+            return true;
+        }
+    }
+
+    textures_.push_back({resource_id, std::move(texture)});
+    return true;
+}
+
+bool SoftwareRenderer::unregister_texture(std::uint32_t resource_id) {
+    for (auto it = textures_.begin(); it != textures_.end(); ++it) {
+        if (it->first == resource_id) {
+            textures_.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SoftwareRenderer::has_texture(std::uint32_t resource_id) const noexcept {
+    for (const auto& entry : textures_) {
+        if (entry.first == resource_id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 std::uint32_t SoftwareRenderer::width() const noexcept {
@@ -176,20 +213,61 @@ void SoftwareRenderer::draw_quad(const RenderCommand& command) {
         static_cast<int>(height_),
         static_cast<int>(std::ceil(command.y + command.height)));
 
-    const std::uint8_t r = to_byte(command.resource_id == 0 ? 1.0f : 0.2f);
-    const std::uint8_t g = to_byte(command.resource_id == 0 ? 1.0f : 0.7f);
-    const std::uint8_t b = to_byte(command.resource_id == 0 ? 1.0f : 1.0f);
+    const Texture* texture = nullptr;
+    for (const auto& entry : textures_) {
+        if (entry.first == command.resource_id) {
+            texture = &entry.second;
+            break;
+        }
+    }
+
+    if (texture == nullptr) {
+        const std::uint8_t r = to_byte(command.resource_id == 0 ? 1.0f : 0.2f);
+        const std::uint8_t g = to_byte(command.resource_id == 0 ? 1.0f : 0.7f);
+        const std::uint8_t b = to_byte(command.resource_id == 0 ? 1.0f : 1.0f);
+
+        for (int y = top; y < bottom; ++y) {
+            for (int x = left; x < right; ++x) {
+                const std::size_t index =
+                    (static_cast<std::size_t>(y) * width_ +
+                     static_cast<std::size_t>(x)) * 4;
+
+                pixels_[index] = r;
+                pixels_[index + 1] = g;
+                pixels_[index + 2] = b;
+                pixels_[index + 3] = 255;
+            }
+        }
+        return;
+    }
+
+    if (right <= left || bottom <= top) {
+        return;
+    }
 
     for (int y = top; y < bottom; ++y) {
         for (int x = left; x < right; ++x) {
-            const std::size_t index =
+            const float u = command.width > 0.0f
+                ? (static_cast<float>(x) + 0.5f - command.x) / command.width
+                : 0.0f;
+            const float v = command.height > 0.0f
+                ? (static_cast<float>(y) + 0.5f - command.y) / command.height
+                : 0.0f;
+
+            const auto tx = static_cast<std::uint32_t>(
+                std::clamp(u, 0.0f, 0.999999f) * texture->width);
+            const auto ty = static_cast<std::uint32_t>(
+                std::clamp(v, 0.0f, 0.999999f) * texture->height);
+            const std::size_t source =
+                (static_cast<std::size_t>(ty) * texture->width + tx) * 4;
+            const std::size_t destination =
                 (static_cast<std::size_t>(y) * width_ +
                  static_cast<std::size_t>(x)) * 4;
 
-            pixels_[index] = r;
-            pixels_[index + 1] = g;
-            pixels_[index + 2] = b;
-            pixels_[index + 3] = 255;
+            pixels_[destination] = texture->pixels[source];
+            pixels_[destination + 1] = texture->pixels[source + 1];
+            pixels_[destination + 2] = texture->pixels[source + 2];
+            pixels_[destination + 3] = texture->pixels[source + 3];
         }
     }
 }
