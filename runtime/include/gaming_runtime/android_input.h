@@ -24,7 +24,7 @@ public:
 
 private:
     InputManager* input_ = nullptr;
-    std::int16_t key_buttons_[256]{};
+    std::int16_t key_buttons_[512]{};
     std::int16_t axis_slots_[64]{};
 };
 
