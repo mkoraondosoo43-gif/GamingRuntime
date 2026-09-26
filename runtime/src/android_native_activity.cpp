@@ -238,6 +238,11 @@ void native_window_destroyed(ANativeActivity* activity, ANativeWindow*) {
         return;
     }
 
+    state->running.store(false, std::memory_order_release);
+    if (state->frame_thread.joinable()) {
+        state->frame_thread.join();
+    }
+
     std::lock_guard<std::mutex> lock(state->mutex);
     state->host.stop();
     state->host.detach_surface();
