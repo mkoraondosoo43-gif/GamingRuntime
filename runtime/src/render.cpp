@@ -12,6 +12,12 @@ std::uint8_t to_byte(float value) {
     return static_cast<std::uint8_t>(std::lround(clamped * 255.0f));
 }
 
+bool valid_dimensions(std::uint32_t width, std::uint32_t height) {
+    constexpr std::uint64_t max_pixels = 16ULL * 1024ULL * 1024ULL;
+    return width != 0 && height != 0 &&
+           static_cast<std::uint64_t>(width) * height <= max_pixels;
+}
+
 } // namespace
 
 RenderFrame::RenderFrame(std::size_t max_commands)
@@ -65,10 +71,26 @@ std::size_t RenderFrame::capacity() const noexcept {
     return max_commands_;
 }
 
-bool NullRenderer::initialize(std::uint32_t, std::uint32_t) {
+bool NullRenderer::initialize(std::uint32_t width, std::uint32_t height) {
+    if (!valid_dimensions(width, height)) {
+        return false;
+    }
+
     initialized_ = true;
+    width_ = width;
+    height_ = height;
     submitted_frames_ = 0;
     last_command_count_ = 0;
+    return true;
+}
+
+bool NullRenderer::resize(std::uint32_t width, std::uint32_t height) {
+    if (!initialized_ || !valid_dimensions(width, height)) {
+        return false;
+    }
+
+    width_ = width;
+    height_ = height;
     return true;
 }
 
@@ -100,6 +122,8 @@ FramebufferView NullRenderer::framebuffer() const noexcept {
 
 void NullRenderer::shutdown() {
     initialized_ = false;
+    width_ = 0;
+    height_ = 0;
 }
 
 std::uint64_t NullRenderer::submitted_frames() const noexcept {
@@ -111,10 +135,7 @@ std::size_t NullRenderer::last_command_count() const noexcept {
 }
 
 bool SoftwareRenderer::initialize(std::uint32_t width, std::uint32_t height) {
-    constexpr std::uint64_t max_pixels = 16ULL * 1024ULL * 1024ULL;
-
-    if (width == 0 || height == 0 ||
-        static_cast<std::uint64_t>(width) * height > max_pixels) {
+    if (!valid_dimensions(width, height)) {
         return false;
     }
 
@@ -124,6 +145,29 @@ bool SoftwareRenderer::initialize(std::uint32_t width, std::uint32_t height) {
         static_cast<std::uint64_t>(width) * height * 4ULL), 0);
     submitted_frames_ = 0;
     initialized_ = true;
+    return true;
+}
+
+bool SoftwareRenderer::resize(std::uint32_t width, std::uint32_t height) {
+    if (!initialized_ || !valid_dimensions(width, height)) {
+        return false;
+    }
+
+    if (width == width_ && height == height_) {
+        return true;
+    }
+
+    std::vector<std::uint8_t> new_pixels;
+    try {
+        new_pixels.assign(static_cast<std::size_t>(
+            static_cast<std::uint64_t>(width) * height * 4ULL), 0);
+    } catch (...) {
+        return false;
+    }
+
+    width_ = width;
+    height_ = height;
+    pixels_.swap(new_pixels);
     return true;
 }
 
@@ -255,6 +299,10 @@ void SoftwareRenderer::draw_quad(const RenderCommand& command) {
         static_cast<int>(height_),
         static_cast<int>(std::ceil(command.y + command.height)));
 
+    if (right <= left || bottom <= top) {
+        return;
+    }
+
     const Texture* texture = nullptr;
     for (const auto& entry : textures_) {
         if (entry.first == command.resource_id) {
@@ -280,10 +328,6 @@ void SoftwareRenderer::draw_quad(const RenderCommand& command) {
                 pixels_[index + 3] = 255;
             }
         }
-        return;
-    }
-
-    if (right <= left || bottom <= top) {
         return;
     }
 
