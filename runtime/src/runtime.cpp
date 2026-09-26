@@ -535,6 +535,27 @@ bool Runtime::attach_display(std::unique_ptr<DisplayBackend> display,
     return true;
 }
 
+bool Runtime::resize_display(std::uint32_t width, std::uint32_t height) {
+    if (!display_ || !display_started_ || width == 0 || height == 0) {
+        return false;
+    }
+
+    return display_->resize(width, height);
+}
+
+void Runtime::detach_display() noexcept {
+    if (display_ && display_started_) {
+        display_->shutdown();
+    }
+
+    display_.reset();
+    if (display_memory_bytes_ != 0) {
+        memory_manager_.release(display_memory_bytes_);
+    }
+    display_memory_bytes_ = 0;
+    display_started_ = false;
+}
+
 bool Runtime::load_texture_asset(std::uint32_t resource_id,
                                  const std::string& relative_path,
                                  std::uint32_t width,
