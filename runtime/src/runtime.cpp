@@ -358,20 +358,22 @@ void Runtime::tick(double delta_seconds) {
         context.audio = &audio_frame_;
         game_module_->update(context);
 
+        bool rendered = false;
         if (renderer_ && renderer_started_) {
-            renderer_->submit(render_frame_);
+            rendered = renderer_->submit(render_frame_);
         }
 
         if (audio_ && audio_started_) {
             audio_->submit(audio_frame_);
         }
 
-        if (display_ && display_started_) {
-            const FramebufferView framebuffer =
-                renderer_ && renderer_started_
-                    ? renderer_->framebuffer()
-                    : FramebufferView{};
-            display_->present(framebuffer);
+        if (display_ && display_started_ && rendered) {
+            const FramebufferView framebuffer = renderer_->framebuffer();
+            if (framebuffer.valid() &&
+                framebuffer.width == display_->width() &&
+                framebuffer.height == display_->height()) {
+                display_->present(framebuffer);
+            }
         }
     }
 }
