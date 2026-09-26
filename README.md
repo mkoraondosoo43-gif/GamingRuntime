@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Memory Budget v1.6
+## Current milestone: Runtime Resource Memory v1.7
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -72,6 +72,13 @@ This stores `100` in memory slot 5, reads it back, and places it in register 0. 
 v1.6 adds a bounded runtime memory accounting layer. Each loaded game reserves its declared `estimated_memory_mb` against the runtime budget before the game becomes active. Oversized packages are rejected without replacing the current runtime state.
 
 The memory manager tracks budget, used bytes, and available bytes. It is an accounting/safety boundary, not virtual RAM: it cannot create physical memory that the device does not have.
+
+
+### Runtime resource memory
+
+v1.7 connects the runtime memory budget to texture resources. Texture uploads reserve their RGBA8 byte size from the runtime memory budget, replacements adjust the accounting to the new size, and explicit texture unloading releases the tracked memory. A texture upload that would exceed the remaining budget is rejected before the renderer resource is committed.
+
+Game reloads also tear down the previous renderer and clear tracked texture resources so resources from one game cannot remain attached to another game's runtime state.
 
 ### Runtime input layer
 
