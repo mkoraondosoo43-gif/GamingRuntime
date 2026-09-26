@@ -68,18 +68,16 @@ bool paint_surface_probe(ANativeWindow* window, std::uint32_t width, std::uint32
 
 class AndroidDemoGame final : public GameModule {
 public:
-    explicit AndroidDemoGame(Runtime& runtime) : runtime_(&runtime) {}
-
     bool initialize() override {
-        return runtime_ != nullptr;
+        return true;
     }
 
     void update(const GameFrameContext& context) override {
-        if (!runtime_) {
+        if (!context.render) {
             return;
         }
 
-        auto& frame = runtime_->render_frame();
+        auto& frame = *context.render;
         // Deliberately bright startup frame so a working surface is obvious
         // on a real device; the software renderer uses pixel coordinates.
         frame.clear({0.08f, 0.18f, 0.35f, 1.0f});
@@ -99,8 +97,6 @@ public:
 
     void shutdown() override {}
 
-private:
-    Runtime* runtime_ = nullptr;
 };
 
 struct HostState {
