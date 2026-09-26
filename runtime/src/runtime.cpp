@@ -354,6 +354,8 @@ void Runtime::tick(double delta_seconds) {
         context.frame_number = frame_.frame_number;
         context.delta_seconds = frame_.delta_seconds;
         context.input = &input_manager_.state();
+        context.render = &render_frame_;
+        context.audio = &audio_frame_;
         game_module_->update(context);
 
         if (renderer_ && renderer_started_) {
