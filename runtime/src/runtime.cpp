@@ -23,7 +23,7 @@ std::string read_file(const std::string& path) {
 
 std::string json_string(const std::string& text, const std::string& key) {
     const std::regex pattern(
-        R"(")" + key + R"("s*:s*"([^"]*)")");
+        "\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
 
     std::smatch match;
     if (!std::regex_search(text, match, pattern)) {
@@ -35,7 +35,7 @@ std::string json_string(const std::string& text, const std::string& key) {
 
 std::uint64_t json_uint64(const std::string& text, const std::string& key) {
     const std::regex pattern(
-        R"(")" + key + R"("s*:s*([0-9]+))");
+        "\"" + key + "\"\\s*:\\s*([0-9]+)");
 
     std::smatch match;
     if (!std::regex_search(text, match, pattern)) {
@@ -55,10 +55,24 @@ Runtime::Runtime(RuntimeConfig config)
     : config_(config) {}
 
 bool Runtime::load_game(const GamePackage& package) {
-    if (package.id.empty() ||
+    if (package.format_version != config_.supported_package_format ||
+        package.id.empty() ||
         package.name.empty() ||
         package.version.empty() ||
-        package.entry_point.empty()) {
+        package.entry_point.empty() ||
+        package.root_directory.empty() ||
+        package.assets_directory.empty()) {
+        return false;
+    }
+
+    std::error_code error;
+    const std::filesystem::path root(package.root_directory);
+    const std::filesystem::path assets(package.assets_directory);
+
+    if (!std::filesystem::is_directory(root, error) ||
+        error ||
+        !std::filesystem::is_directory(assets, error) ||
+        error) {
         return false;
     }
 
@@ -74,11 +88,25 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
         return false;
     }
 
+    const std::filesystem::path manifest_file(manifest_path);
+    const std::filesystem::path package_root = manifest_file.parent_path();
+    const std::string assets_relative = json_string(manifest, "assets");
+
+    if (assets_relative.empty()) {
+        return false;
+    }
+
+    const std::filesystem::path assets_path = package_root / assets_relative;
+
     GamePackage package{
+        .format_version = static_cast<std::uint32_t>(
+            json_uint64(manifest, "format_version")),
         .id = json_string(manifest, "id"),
         .name = json_string(manifest, "name"),
         .version = json_string(manifest, "version"),
         .entry_point = json_string(manifest, "entry_point"),
+        .root_directory = package_root.lexically_normal().string(),
+        .assets_directory = assets_path.lexically_normal().string(),
         .estimated_memory_mb = json_uint64(manifest, "estimated_memory_mb")
     };
 
@@ -97,7 +125,6 @@ bool Runtime::load_game_from_storage(
     const auto games = storage.discover_games();
 
     for (const auto& stored : games) {
-        const std::filesystem::path manifest_path(stored.manifest_path);
         const std::string manifest = read_file(stored.manifest_path);
 
         if (manifest.empty()) {
