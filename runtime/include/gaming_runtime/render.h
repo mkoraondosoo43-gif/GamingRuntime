@@ -68,4 +68,26 @@ private:
     std::size_t last_command_count_ = 0;
 };
 
+class SoftwareRenderer final : public Renderer {
+public:
+    bool initialize(std::uint32_t width, std::uint32_t height) override;
+    bool submit(const RenderFrame& frame) override;
+    void shutdown() override;
+
+    std::uint32_t width() const noexcept;
+    std::uint32_t height() const noexcept;
+    const std::vector<std::uint8_t>& pixels() const noexcept;
+    std::uint64_t submitted_frames() const noexcept;
+
+private:
+    void fill(Color color);
+    void draw_quad(const RenderCommand& command);
+
+    bool initialized_ = false;
+    std::uint32_t width_ = 0;
+    std::uint32_t height_ = 0;
+    std::vector<std::uint8_t> pixels_;
+    std::uint64_t submitted_frames_ = 0;
+};
+
 } // namespace gaming_runtime
