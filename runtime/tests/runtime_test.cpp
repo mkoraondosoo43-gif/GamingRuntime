@@ -124,6 +124,31 @@ int main() {
     assert(runtime.assets().has_asset("textures/hero.bin"));
     assert(!runtime.assets().has_asset("../game.json"));
 
+    const std::filesystem::path outside_bytecode = root / "outside.bc";
+    {
+        std::ofstream outside(outside_bytecode);
+        outside << "PUSH 999\\nHALT\\n";
+    }
+    std::error_code bytecode_symlink_error;
+    std::filesystem::create_symlink(
+        outside_bytecode,
+        game / "escape.bc",
+        bytecode_symlink_error);
+    if (!bytecode_symlink_error) {
+        std::ofstream escaped_manifest(game / "game.json");
+        escaped_manifest << R"({
+            "format_version": 1,
+            "id": "demo.game",
+            "name": "Runtime Demo",
+            "version": "0.5.0",
+            "entry_point": "main",
+            "bytecode": "escape.bc",
+            "assets": "assets",
+            "estimated_memory_mb": 128
+        })";
+        assert(!runtime.load_manifest((game / "game.json").string()));
+    }
+
     const std::filesystem::path outside_asset = root / "outside.bin";
     {
         std::ofstream outside(outside_asset, std::ios::binary);
