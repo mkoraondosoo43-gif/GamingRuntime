@@ -142,7 +142,7 @@ int main() {
     std::vector<std::uint8_t> asset_data;
     assert(runtime.assets().read_asset("audio/hit.bin", asset_data));
     assert(asset_data.size() == 3);
-    assert(runtime.assets().list_assets().size() == 3);
+    assert(runtime.assets().list_assets().size() == 4);
 
     auto renderer = std::make_unique<gaming_runtime::NullRenderer>();
     auto* renderer_ptr = renderer.get();
