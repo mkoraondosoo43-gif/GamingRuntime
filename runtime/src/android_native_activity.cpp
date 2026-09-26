@@ -105,6 +105,7 @@ bool write_demo_package(const std::string& root) {
 
 void frame_loop(HostState* state) {
     auto previous = std::chrono::steady_clock::now();
+    auto next_frame = previous;
 
     while (state->running.load(std::memory_order_acquire)) {
         const auto now = std::chrono::steady_clock::now();
@@ -116,7 +117,19 @@ void frame_loop(HostState* state) {
             state->host.tick(elapsed.count());
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        const double frame_budget =
+            state->runtime.frame_scheduler().frame_budget_seconds();
+        if (frame_budget > 0.0) {
+            next_frame += std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                std::chrono::duration<double>(frame_budget));
+
+            const auto after_tick = std::chrono::steady_clock::now();
+            if (next_frame > after_tick) {
+                std::this_thread::sleep_until(next_frame);
+            } else {
+                next_frame = after_tick;
+            }
+        }
     }
 }
 
