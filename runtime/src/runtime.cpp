@@ -365,7 +365,11 @@ void Runtime::tick(double delta_seconds) {
         }
 
         if (display_ && display_started_) {
-            display_->present();
+            const FramebufferView framebuffer =
+                renderer_ && renderer_started_
+                    ? renderer_->framebuffer()
+                    : FramebufferView{};
+            display_->present(framebuffer);
         }
     }
 }
