@@ -52,7 +52,7 @@ if(NOT ANDROID)
 endif()
 
 if(ANDROID)
-    target_link_libraries(gaming_runtime PRIVATE android)
+    target_link_libraries(gaming_runtime PRIVATE android OpenSLES)
 
     add_library(gaming_runtime_android SHARED
         runtime/src/android_native_activity.cpp
