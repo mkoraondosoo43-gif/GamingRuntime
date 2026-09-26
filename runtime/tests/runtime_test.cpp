@@ -98,7 +98,7 @@ int main() {
     std::vector<std::uint8_t> asset_data;
     assert(runtime.assets().read_asset("audio/hit.bin", asset_data));
     assert(asset_data.size() == 3);
-    assert(runtime.assets().list_assets().size() == 2);
+    assert(runtime.assets().list_assets().size() == 3);
 
     auto renderer = std::make_unique<gaming_runtime::NullRenderer>();
     auto* renderer_ptr = renderer.get();
@@ -139,6 +139,7 @@ int main() {
     }
 
     assert(runtime.load_manifest((game / "game.json").string()));
+    runtime.set_input_button(2, true);
 
     class TestGame final : public gaming_runtime::GameModule {
     public:
