@@ -122,6 +122,7 @@ bool Runtime::load_game(const GamePackage& package) {
         renderer_->shutdown();
     }
     renderer_.reset();
+    renderer_memory_bytes_ = 0;
     renderer_started_ = false;
     input_manager_.clear();
     game_loaded_ = true;
@@ -344,25 +345,36 @@ bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
         return false;
     }
 
-    if (renderer_ && renderer_started_) {
-        renderer_->shutdown();
-    }
-
-    renderer_.reset();
-    renderer_started_ = false;
-
     if (!renderer->initialize(width, height)) {
         return false;
     }
 
-    const std::uint64_t framebuffer_bytes = renderer->memory_bytes();
-    if (!memory_manager_.reserve(framebuffer_bytes)) {
+    const std::uint64_t new_bytes = renderer->memory_bytes();
+    const std::uint64_t old_bytes =
+        renderer_started_ ? renderer_memory_bytes_ : 0;
+
+    if (new_bytes > memory_manager_.available_bytes() + old_bytes) {
         renderer->shutdown();
         return false;
     }
 
+    if (renderer_ && renderer_started_) {
+        renderer_->shutdown();
+        memory_manager_.release(old_bytes);
+    }
+
     renderer_ = std::move(renderer);
+    renderer_memory_bytes_ = new_bytes;
     renderer_started_ = true;
+
+    if (!memory_manager_.reserve(new_bytes)) {
+        renderer_->shutdown();
+        renderer_.reset();
+        renderer_memory_bytes_ = 0;
+        renderer_started_ = false;
+        return false;
+    }
+
     return true;
 }
 
