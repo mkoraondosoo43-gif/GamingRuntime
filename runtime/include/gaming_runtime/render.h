@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <utility>
 
 namespace gaming_runtime {
 
