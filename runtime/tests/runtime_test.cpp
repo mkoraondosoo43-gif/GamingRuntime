@@ -144,14 +144,6 @@ int main() {
     assert(asset_data.size() == 3);
     assert(runtime.assets().list_assets().size() == 4);
 
-    auto renderer = std::make_unique<gaming_runtime::NullRenderer>();
-    auto* renderer_ptr = renderer.get();
-    assert(runtime.attach_renderer(std::move(renderer), 1280, 720));
-    assert(runtime.render_frame().size() == 0);
-    assert(runtime.render_frame().clear({0.02f, 0.03f, 0.05f, 1.0f}));
-    assert(runtime.render_frame().draw_quad(10.0f, 20.0f, 100.0f, 50.0f, 7));
-    assert(runtime.render_frame().size() == 2);
-
     {
         std::ofstream invalid_manifest(game / "game.json");
         invalid_manifest << R"({
@@ -185,6 +177,14 @@ int main() {
     assert(runtime.load_manifest((game / "game.json").string()));
     runtime.set_input_button(2, true);
     assert(runtime.memory().used_bytes() == 128ULL * 1024ULL * 1024ULL);
+
+    auto renderer = std::make_unique<gaming_runtime::NullRenderer>();
+    auto* renderer_ptr = renderer.get();
+    assert(runtime.attach_renderer(std::move(renderer), 1280, 720));
+    assert(runtime.render_frame().size() == 0);
+    assert(runtime.render_frame().clear({0.02f, 0.03f, 0.05f, 1.0f}));
+    assert(runtime.render_frame().draw_quad(10.0f, 20.0f, 100.0f, 50.0f, 7));
+    assert(runtime.render_frame().size() == 2);
 
     class TestGame final : public gaming_runtime::GameModule {
     public:
