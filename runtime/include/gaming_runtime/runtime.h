@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
+
+#include "gaming_runtime/game_module.h"
 
 namespace gaming_runtime {
 
@@ -36,17 +39,24 @@ public:
     bool load_game_from_storage(const std::string& game_id,
                                 const std::string& storage_root);
 
+    bool attach_game_module(std::unique_ptr<GameModule> module);
+    bool start_game();
+    void stop_game();
+
     bool can_run_locally() const;
     void tick(double delta_seconds);
 
     const FrameState& frame_state() const noexcept;
     const GamePackage& loaded_game() const noexcept;
+    bool game_started() const noexcept;
 
 private:
     RuntimeConfig config_;
     GamePackage game_;
     FrameState frame_;
+    std::unique_ptr<GameModule> game_module_;
     bool game_loaded_ = false;
+    bool game_started_ = false;
 };
 
 } // namespace gaming_runtime
