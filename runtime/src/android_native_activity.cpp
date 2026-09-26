@@ -299,41 +299,6 @@ extern "C" void ANativeActivity_onCreate(
         std::string(activity->internalDataPath) + "/games";
 
     if (!write_demo_package(games_root) ||
-        !state->runtime.load_game_from_storage(
-            "android.demo", games_root)) {
-        state->running.store(false, std::memory_order_release);
-        return;
-    }
-
-    state->runtime.attach_game_module(
-        std::make_unique<AndroidDemoGame>(state->runtime));
-
-    state->frame_thread = std::thread(frame_loop, state);
-}
-
-extern "C" void ANativeActivity_onCreate(
-    ANativeActivity* activity,
-    void* saved_state,
-    size_t saved_state_size) {
-    (void)saved_state;
-    (void)saved_state_size;
-
-    using namespace gaming_runtime;
-
-    auto* state = new HostState();
-    activity->instance = state;
-
-    activity->callbacks->onNativeWindowCreated = native_window_created;
-    activity->callbacks->onNativeWindowResized = native_window_resized;
-    activity->callbacks->onNativeWindowDestroyed = native_window_destroyed;
-    activity->callbacks->onInputQueueCreated = input_queue_created;
-    activity->callbacks->onInputQueueDestroyed = input_queue_destroyed;
-    activity->callbacks->onDestroy = on_destroy;
-
-    const std::string games_root =
-        std::string(activity->internalDataPath) + "/games";
-
-    if (!write_demo_package(games_root) ||
         !state->runtime.load_game_from_storage("android.demo", games_root)) {
         state->running.store(false, std::memory_order_release);
         return;
