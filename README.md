@@ -2,9 +2,9 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Bytecode Execution Backend v0.7
+## Current milestone: Package-Driven Bytecode Execution v0.8
 
-GamingRuntime now contains a real runtime-owned bytecode execution backend.
+GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
 The bytecode VM can:
 
@@ -16,6 +16,21 @@ The bytecode VM can:
 - cap instructions executed per frame;
 - cap the VM stack size;
 - run through the existing GameModule lifecycle.
+
+### Package manifest
+
+    {
+        "format_version": 1,
+        "id": "demo.game",
+        "name": "Runtime Demo",
+        "version": "0.8.0",
+        "entry_point": "main",
+        "bytecode": "game.bc",
+        "assets": "assets",
+        "estimated_memory_mb": 128
+    }
+
+The runtime validates the declared executable path, rejects paths outside the package root, and attaches the bytecode module automatically.
 
 ### Example runtime bytecode
 
@@ -44,6 +59,8 @@ This computes 42 and stores it in VM register 0.
     GameModule
           |
     Platform / Hardware Bridge
+
+The package now describes what executable backend the runtime should load instead of requiring the caller to manually provide the bytecode path.
 
 The bytecode backend is intentionally small and portable. It is not being presented as a way to run arbitrary existing Windows, console, or Android executables. It establishes a genuine instruction-execution layer that GamingRuntime controls.
 
