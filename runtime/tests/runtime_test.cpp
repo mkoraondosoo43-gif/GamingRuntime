@@ -1,5 +1,6 @@
 #include "gaming_runtime/runtime.h"
 #include "gaming_runtime/bytecode.h"
+#include "gaming_runtime/asset_manager.h"
 
 #include <cassert>
 #include <memory>
@@ -12,7 +13,18 @@ int main() {
     const std::filesystem::path assets = game / "assets";
 
     std::filesystem::remove_all(root);
-    std::filesystem::create_directories(assets);
+    std::filesystem::create_directories(assets / "textures");
+    std::filesystem::create_directories(assets / "audio");
+
+    {
+        std::ofstream texture(assets / "textures" / "hero.bin", std::ios::binary);
+        texture << "ASSET";
+    }
+
+    {
+        std::ofstream audio(assets / "audio" / "hit.bin", std::ios::binary);
+        audio << "HIT";
+    }
 
     {
         std::ofstream manifest(game / "game.json");
@@ -56,6 +68,12 @@ int main() {
     assert(runtime.loaded_game().assets_directory ==
            assets.lexically_normal().string());
     assert(runtime.can_run_locally());
+    assert(runtime.assets().has_asset("textures/hero.bin"));
+    assert(!runtime.assets().has_asset("../game.json"));
+    std::vector<std::uint8_t> asset_data;
+    assert(runtime.assets().read_asset("audio/hit.bin", asset_data));
+    assert(asset_data.size() == 3);
+    assert(runtime.assets().list_assets().size() == 2);
 
     {
         std::ofstream invalid_manifest(game / "game.json");
