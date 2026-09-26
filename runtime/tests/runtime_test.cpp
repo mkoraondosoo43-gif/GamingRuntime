@@ -59,6 +59,12 @@ int main() {
     }
 
     {
+        const std::uint8_t texture[] = {255, 0, 0, 255};
+        std::ofstream file(assets / "textures" / "tiny.rgba", std::ios::binary);
+        file.write(reinterpret_cast<const char*>(texture), sizeof(texture));
+    }
+
+    {
         std::ofstream manifest(game / "game.json");
         manifest << R"({
             "format_version": 1,
@@ -237,14 +243,9 @@ int main() {
         assert(software_ptr->has_texture(12));
         assert(runtime.memory().used_bytes() ==
                memory_before_texture + 16ULL);
-        assert(runtime.load_texture_asset(12, "textures/checker.rgba", 1, 1));
+        assert(runtime.load_texture_asset(12, "textures/tiny.rgba", 1, 1));
         assert(runtime.memory().used_bytes() ==
                memory_before_texture + 4ULL);
-        assert(runtime.unload_texture(12));
-        assert(!software_ptr->has_texture(12));
-        assert(runtime.memory().used_bytes() == memory_before_texture);
-        assert(!runtime.unload_texture(12));
-
         assert(runtime.render_frame().clear({0.0f, 0.0f, 0.0f, 1.0f}));
         assert(runtime.render_frame().draw_quad(0.0f, 0.0f, 4.0f, 4.0f, 12));
         assert(software_ptr->submit(runtime.render_frame()));
@@ -256,6 +257,20 @@ int main() {
         assert(pixels[4 * 4] == 0);
         assert(pixels[4 * 4 + 1] == 255);
         assert(pixels[4 * 4 + 2] == 0);
+        assert(runtime.unload_texture(12));
+        assert(!software_ptr->has_texture(12));
+        assert(runtime.memory().used_bytes() == memory_before_texture);
+        assert(!runtime.unload_texture(12));
+    }
+
+    {
+        gaming_runtime::Runtime constrained({60, 128, 1});
+        assert(constrained.load_game_from_storage("demo.game", root.string()));
+        auto constrained_renderer = std::make_unique<gaming_runtime::NullRenderer>();
+        assert(constrained.attach_renderer(std::move(constrained_renderer), 8, 8));
+        const auto before = constrained.memory().used_bytes();
+        assert(!constrained.load_texture_asset(1, "textures/checker.rgba", 2, 2));
+        assert(constrained.memory().used_bytes() == before);
     }
 
     {
