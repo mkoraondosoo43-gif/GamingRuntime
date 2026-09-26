@@ -2,6 +2,7 @@
 #include "gaming_runtime/bytecode.h"
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/render.h"
+#include "gaming_runtime/memory.h"
 
 #include <cassert>
 #include <memory>
@@ -10,6 +11,24 @@
 #include <vector>
 
 int main() {
+    {
+        gaming_runtime::MemoryManager memory(1);
+        assert(memory.budget_bytes() == 1024ULL * 1024ULL);
+        assert(memory.used_bytes() == 0);
+        assert(memory.available_bytes() == memory.budget_bytes());
+        assert(memory.reserve(512ULL * 1024ULL));
+        assert(memory.used_bytes() == 512ULL * 1024ULL);
+        assert(memory.available_bytes() == 512ULL * 1024ULL);
+        assert(!memory.reserve(512ULL * 1024ULL + 1ULL));
+        assert(memory.used_bytes() == 512ULL * 1024ULL);
+        memory.release(128ULL * 1024ULL);
+        assert(memory.used_bytes() == 384ULL * 1024ULL);
+        memory.release(UINT64_MAX);
+        assert(memory.used_bytes() == 0);
+        memory.clear();
+        assert(memory.available_bytes() == memory.budget_bytes());
+    }
+
     const std::filesystem::path root = "runtime_test_library";
     const std::filesystem::path game = root / "demo_game";
     const std::filesystem::path assets = game / "assets";
