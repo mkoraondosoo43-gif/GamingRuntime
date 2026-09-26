@@ -4,8 +4,8 @@
 
 namespace gaming_runtime {
 
-void InputManager::reset_frame() {
-    state_.pointer_down = false;
+void InputManager::clear() {
+    state_ = {};
 }
 
 void InputManager::set_button(std::size_t button, bool down) {
