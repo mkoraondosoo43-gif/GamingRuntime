@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Android Input Bridge v2.3
+## Current milestone: Android Runtime Host v2.4
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -33,6 +33,21 @@ The bytecode VM can:
 - reject asset paths that escape the package asset directory;
 - run through the existing GameModule lifecycle.
 
+
+### Android runtime host
+
+v2.4 adds an Android-only AndroidRuntimeHost lifecycle bridge. It connects an Android ANativeWindow to the runtime display boundary and connects AInputEvent objects to the existing InputManager through AndroidInputBridge.
+
+The host supports:
+
+- surface attach using the window's current pixel dimensions;
+- explicit surface resize;
+- safe surface detach through the runtime display lifecycle;
+- explicit Android key and analog-axis mappings;
+- native input event forwarding;
+- runtime start/stop/tick forwarding.
+
+The host remains a bridge rather than a game-specific UI layer. An Android application or NativeActivity remains responsible for receiving the platform lifecycle callbacks and supplying the ANativeWindow and AInputEvent objects.
 
 ### Runtime display boundary
 
