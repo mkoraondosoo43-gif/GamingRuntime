@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Android Display Boundary v2.1
+## Current milestone: Android Framebuffer Presentation v2.2
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -42,14 +42,14 @@ v2.1 also adds an Android NDK AndroidSurfaceDisplay backend. It owns an ANativeW
 
 The core runtime continues to depend only on DisplayBackend; Android-specific window types stay in the platform backend.
 
-The current Android backend establishes the real surface lifecycle and presentation path. It does not yet copy the runtime software-renderer framebuffer into the Android surface; that is a separate rendering integration step.
+The Android backend now locks the configured RGBA8888 surface, validates the renderer framebuffer dimensions/stride, copies each RGBA8 row into the Android buffer, and posts the completed frame. The display boundary receives a read-only `FramebufferView`, so the core runtime does not depend on Android APIs.
 
 
 v2.1 adds a platform-neutral display lifecycle boundary. A `DisplayBackend` owns a logical display surface, supports initialization and resize, and receives one presentation event per running runtime frame. `NullDisplay` provides a deterministic backend for tests.
 
 The runtime includes display backend memory in its resource accounting and treats display attachment transactionally, like renderer and audio attachment. This is the contract that a future Android window/surface backend can implement without exposing Android APIs to game code.
 
-The current boundary does not create an Android window or draw pixels itself. It establishes the display ownership/lifecycle contract before adding Android-specific surface integration.
+The Android backend does not create the Android window itself; the host application supplies the `ANativeWindow`. The runtime now has an end-to-end software-renderer framebuffer-to-Android-surface presentation path.
 
 ### Runtime audio boundary
 
