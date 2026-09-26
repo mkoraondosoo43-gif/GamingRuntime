@@ -86,6 +86,10 @@ bool NullRenderer::upload_texture(std::uint32_t, const Texture& texture) {
     return initialized_ && texture.valid();
 }
 
+bool NullRenderer::unregister_texture(std::uint32_t) {
+    return initialized_;
+}
+
 void NullRenderer::shutdown() {
     initialized_ = false;
 }
