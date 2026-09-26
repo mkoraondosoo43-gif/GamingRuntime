@@ -140,6 +140,11 @@ std::vector<AssetInfo> AssetManager::list_assets() const {
             continue;
         }
 
+        std::string safe_path;
+        if (!resolve_asset(relative.generic_string(), safe_path)) {
+            continue;
+        }
+
         const auto size = it->file_size(error);
         if (error) {
             continue;
