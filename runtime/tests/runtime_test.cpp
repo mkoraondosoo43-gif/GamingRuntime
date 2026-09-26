@@ -1,6 +1,7 @@
 #include "gaming_runtime/runtime.h"
 
 #include <cassert>
+#include <memory>
 #include <filesystem>
 #include <fstream>
 
@@ -74,8 +75,44 @@ int main() {
 
     assert(runtime.load_manifest((game / "game.json").string()));
 
+    class TestGame final : public gaming_runtime::GameModule {
+    public:
+        bool initialize() override {
+            initialized = true;
+            return true;
+        }
+
+        void update(const gaming_runtime::GameFrameContext& context) override {
+            last_frame = context.frame_number;
+            last_delta = context.delta_seconds;
+        }
+
+        void shutdown() override {
+            shutdown_called = true;
+        }
+
+        bool initialized = false;
+        bool shutdown_called = false;
+        std::uint64_t last_frame = 0;
+        double last_delta = 0.0;
+    };
+
+    auto module = std::make_unique<TestGame>();
+    auto* module_ptr = module.get();
+
+    assert(runtime.attach_game_module(std::move(module)));
+    assert(runtime.start_game());
+    assert(runtime.game_started());
+    assert(module_ptr->initialized);
+
     runtime.tick(1.0 / 60.0);
     assert(runtime.frame_state().frame_number == 1);
+    assert(module_ptr->last_frame == 1);
+    assert(module_ptr->last_delta > 0.0);
+
+    runtime.stop_game();
+    assert(!runtime.game_started());
+    assert(module_ptr->shutdown_called);
 
     std::filesystem::remove_all(root);
     return 0;
