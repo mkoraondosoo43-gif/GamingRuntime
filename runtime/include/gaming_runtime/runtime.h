@@ -82,6 +82,8 @@ public:
     bool attach_display(std::unique_ptr<DisplayBackend> display,
                         std::uint32_t width,
                         std::uint32_t height);
+    bool resize_display(std::uint32_t width, std::uint32_t height);
+    void detach_display() noexcept;
 
     InputManager& input_manager() noexcept;
     const InputManager& input_manager() const noexcept;
