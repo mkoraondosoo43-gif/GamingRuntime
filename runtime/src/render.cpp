@@ -28,10 +28,10 @@ bool RenderFrame::clear(Color color) {
         return false;
     }
 
-    commands_.push_back({
-        .type = RenderCommand::Type::Clear,
-        .color = color
-    });
+    RenderCommand command;
+    command.type = RenderCommand::Type::Clear;
+    command.color = color;
+    commands_.push_back(command);
     return true;
 }
 
@@ -42,14 +42,14 @@ bool RenderFrame::draw_quad(float x, float y, float width, float height,
         return false;
     }
 
-    commands_.push_back({
-        .type = RenderCommand::Type::DrawQuad,
-        .x = x,
-        .y = y,
-        .width = width,
-        .height = height,
-        .resource_id = resource_id
-    });
+    RenderCommand command;
+    command.type = RenderCommand::Type::DrawQuad;
+    command.x = x;
+    command.y = y;
+    command.width = width;
+    command.height = height;
+    command.resource_id = resource_id;
+    commands_.push_back(command);
     return true;
 }
 
