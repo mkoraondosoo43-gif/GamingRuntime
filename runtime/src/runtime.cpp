@@ -353,7 +353,9 @@ bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
     const std::uint64_t old_bytes =
         renderer_started_ ? renderer_memory_bytes_ : 0;
 
-    if (new_bytes > memory_manager_.available_bytes() + old_bytes) {
+    const std::uint64_t available_bytes = memory_manager_.available_bytes();
+    if (new_bytes > available_bytes &&
+        new_bytes - available_bytes > old_bytes) {
         renderer->shutdown();
         return false;
     }
