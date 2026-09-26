@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Audio Boundary v2.0
+## Current milestone: Android Display Boundary v2.1
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -33,6 +33,14 @@ The bytecode VM can:
 - reject asset paths that escape the package asset directory;
 - run through the existing GameModule lifecycle.
 
+
+### Runtime display boundary
+
+v2.1 adds a platform-neutral display lifecycle boundary. A `DisplayBackend` owns a logical display surface, supports initialization and resize, and receives one presentation event per running runtime frame. `NullDisplay` provides a deterministic backend for tests.
+
+The runtime includes display backend memory in its resource accounting and treats display attachment transactionally, like renderer and audio attachment. This is the contract that a future Android window/surface backend can implement without exposing Android APIs to game code.
+
+The current boundary does not create an Android window or draw pixels itself. It establishes the display ownership/lifecycle contract before adding Android-specific surface integration.
 
 ### Runtime audio boundary
 
