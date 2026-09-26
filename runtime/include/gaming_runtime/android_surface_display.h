@@ -19,7 +19,7 @@ public:
 
     bool initialize(std::uint32_t width, std::uint32_t height) override;
     bool resize(std::uint32_t width, std::uint32_t height) override;
-    bool present() override;
+    bool present(const FramebufferView& framebuffer) override;
     void shutdown() override;
 
     std::uint32_t width() const noexcept override;
