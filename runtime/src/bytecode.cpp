@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace gaming_runtime {
 namespace {
@@ -42,6 +43,14 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         out = {BytecodeOp::Multiply, 0};
     } else if (op == "SET") {
         out = {BytecodeOp::Set, value};
+    } else if (op == "GET") {
+        out = {BytecodeOp::Get, value};
+    } else if (op == "EQ") {
+        out = {BytecodeOp::CompareEqual, 0};
+    } else if (op == "JMP") {
+        out = {BytecodeOp::Jump, value};
+    } else if (op == "JZ") {
+        out = {BytecodeOp::JumpIfZero, value};
     } else {
         return false;
     }
@@ -154,6 +163,53 @@ void BytecodeGameModule::update(const GameFrameContext&) {
 
             registers_[instruction.operand] = stack_.back();
             stack_.pop_back();
+            break;
+
+        case BytecodeOp::Get:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                stack_.size() >= 1024) {
+                halted_ = true;
+                break;
+            }
+            stack_.push_back(registers_[instruction.operand]);
+            break;
+
+        case BytecodeOp::CompareEqual:
+            if (stack_.size() < 2) {
+                halted_ = true;
+                break;
+            }
+            {
+                const auto rhs = stack_.back();
+                stack_.pop_back();
+                const auto lhs = stack_.back();
+                stack_.pop_back();
+                stack_.push_back(lhs == rhs ? 1 : 0);
+            }
+            break;
+
+        case BytecodeOp::Jump:
+            if (instruction.operand < 0 ||
+                static_cast<std::size_t>(instruction.operand) >= program_.size()) {
+                halted_ = true;
+                break;
+            }
+            instruction_pointer_ = static_cast<std::size_t>(instruction.operand);
+            break;
+
+        case BytecodeOp::JumpIfZero:
+            if (stack_.empty() || instruction.operand < 0 ||
+                static_cast<std::size_t>(instruction.operand) >= program_.size()) {
+                halted_ = true;
+                break;
+            }
+            {
+                const auto condition = stack_.back();
+                stack_.pop_back();
+                if (condition == 0) {
+                    instruction_pointer_ = static_cast<std::size_t>(instruction.operand);
+                }
+            }
             break;
 
         case BytecodeOp::Halt:
