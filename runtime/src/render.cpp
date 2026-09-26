@@ -82,6 +82,10 @@ bool NullRenderer::submit(const RenderFrame& frame) {
     return true;
 }
 
+bool NullRenderer::upload_texture(std::uint32_t, const Texture& texture) {
+    return initialized_ && texture.valid();
+}
+
 void NullRenderer::shutdown() {
     initialized_ = false;
 }
@@ -129,6 +133,10 @@ bool SoftwareRenderer::submit(const RenderFrame& frame) {
 
     ++submitted_frames_;
     return true;
+}
+
+bool SoftwareRenderer::upload_texture(std::uint32_t resource_id, const Texture& texture) {
+    return register_texture(resource_id, texture);
 }
 
 void SoftwareRenderer::shutdown() {
