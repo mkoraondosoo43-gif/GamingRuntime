@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Rendering Interface v1.2
+## Current milestone: Software Rendering Backend v1.3
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -24,6 +24,8 @@ The bytecode VM can:
 - build bounded runtime render frames with clear and quad commands;
 - submit render frames through a renderer interface;
 - provide a NullRenderer for backend-independent testing;
+- render actual RGBA pixels with the built-in SoftwareRenderer;
+- enforce a 16-million-pixel framebuffer safety limit;
 - build bounded runtime render frames with clear and quad commands;
 - submit render frames through a renderer interface;
 - provide a NullRenderer for backend-independent testing;
@@ -63,6 +65,14 @@ Example:
     HALT
 
 This stores `100` in memory slot 5, reads it back, and places it in register 0. Invalid memory indexes halt execution.
+
+### Software rendering backend
+
+GamingRuntime now includes a deterministic CPU-based `SoftwareRenderer`. It consumes the same runtime render commands and produces an RGBA8 framebuffer. This makes the rendering path executable and testable without depending on Android, Vulkan, OpenGL ES, or a physical GPU.
+
+The software backend currently rasterizes clear and rectangle commands. It is a foundation for validating the runtime graphics pipeline; it is not intended to replace a hardware-accelerated Android backend.
+
+Framebuffer allocation is capped at 16 million pixels to keep accidental allocations bounded.
 
 ### Runtime rendering interface
 
