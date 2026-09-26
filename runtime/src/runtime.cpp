@@ -53,7 +53,7 @@ std::uint64_t json_uint64(const std::string& text, const std::string& key) {
 } // namespace
 
 Runtime::Runtime(RuntimeConfig config)
-    : config_(config) {}
+    : config_(config), render_frame_(4096) {}
 
 bool Runtime::load_game(const GamePackage& package) {
     if (package.format_version != config_.supported_package_format ||
@@ -102,6 +102,7 @@ bool Runtime::load_game(const GamePackage& package) {
     frame_ = {};
     game_started_ = false;
     game_module_.reset();
+    render_frame_.reset();
     game_loaded_ = true;
     return true;
 }
@@ -254,6 +255,12 @@ void Runtime::stop_game() {
         game_module_->shutdown();
     }
 
+    render_frame_.reset();
+    if (renderer_ && renderer_started_) {
+        renderer_->shutdown();
+        renderer_started_ = false;
+    }
+
     game_started_ = false;
 }
 
@@ -275,11 +282,17 @@ void Runtime::tick(double delta_seconds) {
     frame_.delta_seconds = clamped;
     ++frame_.frame_number;
 
+    render_frame_.reset();
+
     if (game_started_ && game_module_) {
         game_module_->update({
             .frame_number = frame_.frame_number,
             .delta_seconds = frame_.delta_seconds
         });
+
+        if (renderer_ && renderer_started_) {
+            renderer_->submit(render_frame_);
+        }
     }
 }
 
@@ -297,6 +310,34 @@ bool Runtime::game_started() const noexcept {
 
 const AssetManager& Runtime::assets() const noexcept {
     return asset_manager_;
+}
+
+RenderFrame& Runtime::render_frame() noexcept {
+    return render_frame_;
+}
+
+const RenderFrame& Runtime::render_frame() const noexcept {
+    return render_frame_;
+}
+
+bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
+                              std::uint32_t width,
+                              std::uint32_t height) {
+    if (!game_loaded_ || game_started_ || !renderer ||
+        width == 0 || height == 0) {
+        return false;
+    }
+
+    if (renderer_ && renderer_started_) {
+        renderer_->shutdown();
+    }
+
+    renderer_ = std::move(renderer);
+    renderer_started_ = renderer_->initialize(width, height);
+    if (!renderer_started_) {
+        renderer_.reset();
+    }
+    return renderer_started_;
 }
 
 } // namespace gaming_runtime
