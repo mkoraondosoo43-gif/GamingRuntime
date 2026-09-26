@@ -156,18 +156,17 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
         return false;
     }
 
-    GamePackage package{
-        .format_version = static_cast<std::uint32_t>(
-            json_uint64(manifest, "format_version")),
-        .id = json_string(manifest, "id"),
-        .name = json_string(manifest, "name"),
-        .version = json_string(manifest, "version"),
-        .entry_point = json_string(manifest, "entry_point"),
-        .root_directory = package_root.lexically_normal().string(),
-        .assets_directory = assets_path.lexically_normal().string(),
-        .bytecode_path = bytecode_path.string(),
-        .estimated_memory_mb = json_uint64(manifest, "estimated_memory_mb")
-    };
+    GamePackage package;
+    package.format_version = static_cast<std::uint32_t>(
+        json_uint64(manifest, "format_version"));
+    package.id = json_string(manifest, "id");
+    package.name = json_string(manifest, "name");
+    package.version = json_string(manifest, "version");
+    package.entry_point = json_string(manifest, "entry_point");
+    package.root_directory = package_root.lexically_normal().string();
+    package.assets_directory = assets_path.lexically_normal().string();
+    package.bytecode_path = bytecode_path.string();
+    package.estimated_memory_mb = json_uint64(manifest, "estimated_memory_mb");
 
     if (!load_game(package)) {
         return false;
@@ -281,10 +280,10 @@ void Runtime::tick(double delta_seconds) {
     render_frame_.reset();
 
     if (game_started_ && game_module_) {
-        game_module_->update({
-            .frame_number = frame_.frame_number,
-            .delta_seconds = frame_.delta_seconds
-        });
+        GameFrameContext context;
+        context.frame_number = frame_.frame_number;
+        context.delta_seconds = frame_.delta_seconds;
+        game_module_->update(context);
 
         if (renderer_ && renderer_started_) {
             renderer_->submit(render_frame_);
