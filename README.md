@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Texture Resource Rendering v1.4
+## Current milestone: Runtime Input Layer v1.5
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -65,6 +65,26 @@ Example:
     HALT
 
 This stores `100` in memory slot 5, reads it back, and places it in register 0. Invalid memory indexes halt execution.
+
+
+### Runtime input layer
+
+v1.5 adds a platform-neutral input boundary. The runtime owns the current input state and game modules receive a read-only snapshot through GameFrameContext.
+
+The input layer supports:
+
+- 64 runtime-owned digital buttons;
+- 8 normalized analog axes in the range -1.0 to 1.0;
+- normalized pointer/touch position;
+- pointer/touch pressed state.
+
+The runtime exposes setters such as:
+
+    runtime.set_input_button(2, true);
+    runtime.set_input_axis(0, 1.0f);
+    runtime.set_pointer_input(120.0f, 80.0f, true);
+
+A future Android input bridge can translate touch, gamepad, keyboard, or other platform events into this boundary without making game code depend directly on Android APIs.
 
 ### Software rendering backend
 
