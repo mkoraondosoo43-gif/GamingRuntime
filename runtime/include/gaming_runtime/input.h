@@ -28,7 +28,7 @@ class InputManager {
 public:
     InputManager() = default;
 
-    void reset_frame();
+    void clear();
     void set_button(std::size_t button, bool down);
     void set_axis(std::size_t axis, float value);
     void set_pointer(float x, float y, bool down);
