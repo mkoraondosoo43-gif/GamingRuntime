@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/game_module.h"
 
 namespace gaming_runtime {
@@ -51,12 +52,14 @@ public:
     const FrameState& frame_state() const noexcept;
     const GamePackage& loaded_game() const noexcept;
     bool game_started() const noexcept;
+    const AssetManager& assets() const noexcept;
 
 private:
     RuntimeConfig config_;
     GamePackage game_;
     FrameState frame_;
     std::unique_ptr<GameModule> game_module_;
+    AssetManager asset_manager_;
     bool game_loaded_ = false;
     bool game_started_ = false;
 };
