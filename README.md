@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Package-Driven Bytecode Execution v0.8
+## Current milestone: Game-Control Bytecode VM v0.9
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -15,7 +15,29 @@ The bytecode VM can:
 - halt safely on invalid stack/register operations;
 - cap instructions executed per frame;
 - cap the VM stack size;
+- read and write VM registers;
+- compare values with `EQ`;
+- branch with `JMP` and `JZ`;
 - run through the existing GameModule lifecycle.
+
+### Game-control bytecode
+
+The VM now supports the basic control flow needed for stateful game logic:
+
+    PUSH 7
+    SET 0
+    GET 0
+    PUSH 7
+    EQ
+    JZ 10
+    PUSH 42
+    SET 1
+    HALT
+    PUSH 99
+    SET 1
+    HALT
+
+This lets game code make decisions without leaving the runtime VM. Jump targets are instruction indexes and invalid targets halt execution.
 
 ### Package manifest
 
