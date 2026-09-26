@@ -7,7 +7,6 @@
 #include <android/looper.h>
 #include <android/native_activity.h>
 #include <android/native_window.h>
-#include <android/log.h>
 
 #include <atomic>
 #include <chrono>
@@ -22,49 +21,6 @@
 
 namespace gaming_runtime {
 namespace {
-
-constexpr char kLogTag[] = "GamingRuntime";
-
-void log_message(const char* message) {
-    __android_log_print(ANDROID_LOG_INFO, kLogTag, "%s", message);
-}
-
-bool paint_surface_probe(ANativeWindow* window, std::uint32_t width, std::uint32_t height) {
-    if (!window || width == 0 || height == 0) {
-        return false;
-    }
-
-    if (ANativeWindow_setBuffersGeometry(window, static_cast<int32_t>(width), static_cast<int32_t>(height), WINDOW_FORMAT_RGBA_8888) != 0) {
-        log_message("surface probe: setBuffersGeometry failed");
-        return false;
-    }
-
-    ANativeWindow_Buffer buffer{};
-    ARect dirty{0, 0, static_cast<int32_t>(width), static_cast<int32_t>(height)};
-    if (ANativeWindow_lock(window, &buffer, &dirty) != 0) {
-        log_message("surface probe: lock failed");
-        return false;
-    }
-
-    const bool valid = buffer.bits != nullptr && buffer.width >= width && buffer.height >= height && buffer.stride >= static_cast<int32_t>(width);
-    if (valid) {
-        auto* pixels = static_cast<std::uint8_t*>(buffer.bits);
-        const std::size_t stride = static_cast<std::size_t>(buffer.stride) * 4U;
-        for (std::uint32_t y = 0; y < height; ++y) {
-            auto* row = pixels + static_cast<std::size_t>(y) * stride;
-            for (std::uint32_t x = 0; x < width; ++x) {
-                row[x * 4U + 0U] = 20U;
-                row[x * 4U + 1U] = 220U;
-                row[x * 4U + 2U] = 70U;
-                row[x * 4U + 3U] = 255U;
-            }
-        }
-    }
-
-    const int post_result = ANativeWindow_unlockAndPost(window);
-    log_message(valid && post_result == 0 ? "surface probe: POST OK" : "surface probe: POST FAILED");
-    return valid && post_result == 0;
-}
 
 class AndroidDemoGame final : public GameModule {
 public:
@@ -230,20 +186,13 @@ void native_window_created(ANativeActivity* activity, ANativeWindow* window) {
 
     const int native_width = ANativeWindow_getWidth(window);
     const int native_height = ANativeWindow_getHeight(window);
-    log_message("native window created");
     if (native_width <= 0 || native_height <= 0) {
-        log_message("native window has invalid size");
         return;
     }
-
-    paint_surface_probe(window, static_cast<std::uint32_t>(native_width), static_cast<std::uint32_t>(native_height));
 
     if (!state->host.attach_surface(window)) {
-        log_message("runtime surface attach FAILED");
         return;
     }
-    log_message("runtime surface attached");
-
     const std::uint32_t width = state->host.surface_width();
     const std::uint32_t height = state->host.surface_height();
 
@@ -251,19 +200,13 @@ void native_window_created(ANativeActivity* activity, ANativeWindow* window) {
             std::make_unique<SoftwareRenderer>(),
             width,
             height)) {
-        log_message("software renderer attach FAILED");
         state->host.detach_surface();
         return;
     }
-    log_message("software renderer attached");
-
     if (!state->host.start()) {
-        log_message("runtime start FAILED");
         state->host.detach_surface();
         return;
     }
-    log_message("runtime started");
-
     if (!state->frame_thread.joinable()) {
         state->running.store(true, std::memory_order_release);
         state->frame_thread = std::thread(frame_loop, state);
@@ -366,8 +309,6 @@ extern "C" void ANativeActivity_onCreate(
 
     auto* state = new HostState();
     activity->instance = state;
-    log_message("NativeActivity created");
-
     activity->callbacks->onNativeWindowCreated = native_window_created;
     activity->callbacks->onNativeWindowResized = native_window_resized;
     activity->callbacks->onNativeWindowDestroyed = native_window_destroyed;
@@ -387,7 +328,6 @@ extern "C" void ANativeActivity_onCreate(
     if (!state->runtime.attach_game_module(
             std::make_unique<AndroidDemoGame>())) {
         state->running.store(false, std::memory_order_release);
-        log_message("demo game attach FAILED");
         return;
     }
 }
