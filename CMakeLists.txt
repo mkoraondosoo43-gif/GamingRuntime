@@ -17,6 +17,7 @@ add_library(gaming_runtime
     runtime/src/frame_scheduler.cpp
     runtime/src/audio.cpp
     runtime/src/display.cpp
+    $<$<PLATFORM_ID:Android>:runtime/src/android_surface_display.cpp>
 )
 
 target_include_directories(gaming_runtime
@@ -45,3 +46,7 @@ target_link_libraries(storage_test
 enable_testing()
 add_test(NAME RuntimeCoreTest COMMAND runtime_test)
 add_test(NAME StorageTest COMMAND storage_test)
+
+if(ANDROID)
+    target_link_libraries(gaming_runtime PRIVATE android)
+endif()
