@@ -286,6 +286,16 @@ int main() {
     assert(module_ptr->last_frame == 2);
     assert(module_ptr->last_delta > 0.0);
 
+    const memory_before_resize = runtime.memory().used_bytes();
+    assert(runtime.resize_display(640, 360));
+    assert(display_ptr->width() == 640);
+    assert(display_ptr->height() == 360);
+    assert(renderer_ptr->framebuffer().width == 640);
+    assert(renderer_ptr->framebuffer().height == 360);
+    assert(renderer_ptr->framebuffer().size_bytes ==
+           640ULL * 360ULL * 4ULL);
+    assert(runtime.memory().used_bytes() < memory_before_resize);
+
     runtime.stop_game();
     assert(!runtime.game_started());
     assert(module_ptr->shutdown_called);
