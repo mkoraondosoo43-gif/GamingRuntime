@@ -1,0 +1,71 @@
+#pragma once
+
+#include <cstdint>
+#include <vector>
+
+namespace gaming_runtime {
+
+struct Color {
+    float r = 0.0f;
+    float g = 0.0f;
+    float b = 0.0f;
+    float a = 1.0f;
+};
+
+struct RenderCommand {
+    enum class Type : std::uint8_t {
+        Clear,
+        DrawQuad
+    };
+
+    Type type = Type::Clear;
+    Color color{};
+    float x = 0.0f;
+    float y = 0.0f;
+    float width = 0.0f;
+    float height = 0.0f;
+    std::uint32_t resource_id = 0;
+};
+
+class RenderFrame {
+public:
+    explicit RenderFrame(std::size_t max_commands = 4096);
+
+    void reset();
+    bool clear(Color color);
+    bool draw_quad(float x, float y, float width, float height,
+                   std::uint32_t resource_id = 0);
+    const std::vector<RenderCommand>& commands() const noexcept;
+    std::size_t size() const noexcept;
+    std::size_t capacity() const noexcept;
+
+private:
+    std::vector<RenderCommand> commands_;
+    std::size_t max_commands_;
+};
+
+class Renderer {
+public:
+    virtual ~Renderer() = default;
+
+    virtual bool initialize(std::uint32_t width, std::uint32_t height) = 0;
+    virtual bool submit(const RenderFrame& frame) = 0;
+    virtual void shutdown() = 0;
+};
+
+class NullRenderer final : public Renderer {
+public:
+    bool initialize(std::uint32_t width, std::uint32_t height) override;
+    bool submit(const RenderFrame& frame) override;
+    void shutdown() override;
+
+    std::uint64_t submitted_frames() const noexcept;
+    std::size_t last_command_count() const noexcept;
+
+private:
+    bool initialized_ = false;
+    std::uint64_t submitted_frames_ = 0;
+    std::size_t last_command_count_ = 0;
+};
+
+} // namespace gaming_runtime
