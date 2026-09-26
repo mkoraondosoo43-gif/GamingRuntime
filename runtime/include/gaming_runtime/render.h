@@ -43,8 +43,7 @@ struct FramebufferView {
         const std::uint64_t required_bytes =
             static_cast<std::uint64_t>(stride_bytes) *
             static_cast<std::uint64_t>(height);
-        return required_bytes <=
-               static_cast<std::uint64_t>(size_bytes);
+        return required_bytes <= static_cast<std::uint64_t>(size_bytes);
     }
 };
 
@@ -85,6 +84,7 @@ public:
     virtual ~Renderer() = default;
 
     virtual bool initialize(std::uint32_t width, std::uint32_t height) = 0;
+    virtual bool resize(std::uint32_t width, std::uint32_t height) = 0;
     virtual bool submit(const RenderFrame& frame) = 0;
     virtual bool upload_texture(std::uint32_t resource_id, const Texture& texture) = 0;
     virtual bool unregister_texture(std::uint32_t resource_id) = 0;
@@ -96,6 +96,7 @@ public:
 class NullRenderer final : public Renderer {
 public:
     bool initialize(std::uint32_t width, std::uint32_t height) override;
+    bool resize(std::uint32_t width, std::uint32_t height) override;
     bool submit(const RenderFrame& frame) override;
     bool upload_texture(std::uint32_t resource_id, const Texture& texture) override;
     bool unregister_texture(std::uint32_t resource_id) override;
@@ -108,6 +109,8 @@ public:
 
 private:
     bool initialized_ = false;
+    std::uint32_t width_ = 0;
+    std::uint32_t height_ = 0;
     std::uint64_t submitted_frames_ = 0;
     std::size_t last_command_count_ = 0;
 };
@@ -115,6 +118,7 @@ private:
 class SoftwareRenderer final : public Renderer {
 public:
     bool initialize(std::uint32_t width, std::uint32_t height) override;
+    bool resize(std::uint32_t width, std::uint32_t height) override;
     bool submit(const RenderFrame& frame) override;
     bool upload_texture(std::uint32_t resource_id, const Texture& texture) override;
     void shutdown() override;
