@@ -384,8 +384,13 @@ bool Runtime::load_game_from_storage(
             continue;
         }
 
-        if (json_string(manifest, "id") == game_id) {
-            return load_manifest(stored.manifest_path);
+        std::unordered_map<std::string, std::string> strings;
+        std::unordered_map<std::string, std::uint64_t> numbers;
+        if (parse_manifest_json(manifest, strings, numbers)) {
+            const auto id_it = strings.find("id");
+            if (id_it != strings.end() && id_it->second == game_id) {
+                return load_manifest(stored.manifest_path);
+            }
         }
     }
 
