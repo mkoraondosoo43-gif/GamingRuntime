@@ -20,11 +20,22 @@ int main() {
             "format_version": 1,
             "id": "demo.game",
             "name": "Runtime Demo",
-            "version": "0.5.0",
+            "version": "0.8.0",
             "entry_point": "main",
+            "bytecode": "game.bc",
             "assets": "assets",
             "estimated_memory_mb": 128
         })";
+    }
+
+    const std::filesystem::path bytecode = game / "game.bc";
+    {
+        std::ofstream program(bytecode);
+        program << "PUSH 20\n";
+        program << "PUSH 22\n";
+        program << "ADD\n";
+        program << "SET 0\n";
+        program << "HALT\n";
     }
 
     gaming_runtime::Runtime runtime({
@@ -39,7 +50,7 @@ int main() {
 
     assert(runtime.loaded_game().format_version == 1);
     assert(runtime.loaded_game().id == "demo.game");
-    assert(runtime.loaded_game().version == "0.5.0");
+    assert(runtime.loaded_game().version == "0.8.0");
     assert(runtime.loaded_game().root_directory ==
            game.lexically_normal().string());
     assert(runtime.loaded_game().assets_directory ==
@@ -54,6 +65,7 @@ int main() {
             "name": "Runtime Demo",
             "version": "0.5.0",
             "entry_point": "main",
+            "bytecode": "game.bc",
             "assets": "../outside",
             "estimated_memory_mb": 128
         })";
@@ -114,16 +126,6 @@ int main() {
     runtime.stop_game();
     assert(!runtime.game_started());
     assert(module_ptr->shutdown_called);
-
-    const std::filesystem::path bytecode = game / "game.bc";
-    {
-        std::ofstream program(bytecode);
-        program << "PUSH 20\n";
-        program << "PUSH 22\n";
-        program << "ADD\n";
-        program << "SET 0\n";
-        program << "HALT\n";
-    }
 
     assert(runtime.load_bytecode_module(bytecode.string()));
     assert(runtime.start_game());
