@@ -29,6 +29,9 @@ public:
 
     bool load_game(const GamePackage& package);
     bool load_manifest(const std::string& manifest_path);
+    bool load_game_from_storage(const std::string& game_id,
+                                const std::string& storage_root);
+
     bool can_run_locally() const;
     void tick(double delta_seconds);
 
