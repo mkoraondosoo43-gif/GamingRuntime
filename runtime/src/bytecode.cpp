@@ -28,6 +28,11 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         return true;
     }
 
+    if (op == "EQ") {
+        out = {BytecodeOp::CompareEqual, 0};
+        return true;
+    }
+
     std::int64_t value = 0;
     if (!(input >> value)) {
         return false;
@@ -45,8 +50,6 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         out = {BytecodeOp::Set, value};
     } else if (op == "GET") {
         out = {BytecodeOp::Get, value};
-    } else if (op == "EQ") {
-        out = {BytecodeOp::CompareEqual, 0};
     } else if (op == "JMP") {
         out = {BytecodeOp::Jump, value};
     } else if (op == "JZ") {
