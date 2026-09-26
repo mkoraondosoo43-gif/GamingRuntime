@@ -44,6 +44,36 @@ int main() {
            assets.lexically_normal().string());
     assert(runtime.can_run_locally());
 
+    {
+        std::ofstream invalid_manifest(game / "game.json");
+        invalid_manifest << R"({
+            "format_version": 1,
+            "id": "demo.game",
+            "name": "Runtime Demo",
+            "version": "0.5.0",
+            "entry_point": "main",
+            "assets": "../outside",
+            "estimated_memory_mb": 128
+        })";
+    }
+
+    assert(!runtime.load_manifest((game / "game.json").string()));
+
+    {
+        std::ofstream valid_manifest(game / "game.json");
+        valid_manifest << R"({
+            "format_version": 1,
+            "id": "demo.game",
+            "name": "Runtime Demo",
+            "version": "0.5.0",
+            "entry_point": "main",
+            "assets": "assets",
+            "estimated_memory_mb": 128
+        })";
+    }
+
+    assert(runtime.load_manifest((game / "game.json").string()));
+
     runtime.tick(1.0 / 60.0);
     assert(runtime.frame_state().frame_number == 1);
 
