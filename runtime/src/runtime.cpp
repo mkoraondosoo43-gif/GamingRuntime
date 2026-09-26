@@ -341,6 +341,7 @@ void Runtime::tick(double delta_seconds) {
     ++frame_.frame_number;
 
     render_frame_.reset();
+    audio_frame_.reset();
 
     if (game_started_ && game_module_) {
         GameFrameContext context;
