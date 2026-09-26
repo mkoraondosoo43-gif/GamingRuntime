@@ -7,6 +7,7 @@
 #include <fstream>
 #include <regex>
 #include <sstream>
+#include <vector>
 
 namespace gaming_runtime {
 namespace {
