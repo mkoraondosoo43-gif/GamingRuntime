@@ -85,6 +85,14 @@ int main() {
     assert(runtime.input_state().pointer_x == 120.0f);
     assert(runtime.input_state().pointer_y == 80.0f);
     assert(runtime.input_state().pointer_down);
+    runtime.set_input_button(63, true);
+    runtime.set_input_axis(7, -2.0f);
+    runtime.set_input_button(64, true);
+    runtime.set_input_axis(8, 2.0f);
+    assert(runtime.input_state().button_down(63));
+    assert(runtime.input_state().axis_value(7) == -1.0f);
+    assert(!runtime.input_state().button_down(64));
+    assert(runtime.input_state().axis_value(8) == 0.0f);
     assert(runtime.assets().has_asset("textures/hero.bin"));
     assert(!runtime.assets().has_asset("../game.json"));
     std::vector<std::uint8_t> asset_data;
