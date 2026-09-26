@@ -7,7 +7,6 @@
 #include <android/looper.h>
 #include <android/native_activity.h>
 #include <android/native_window.h>
-#include <android_native_app_glue.h>
 
 #include <atomic>
 #include <chrono>
@@ -169,13 +168,6 @@ void stop_input_thread(HostState* state) {
     state->input_looper = nullptr;
 }
 
-void on_native_window_created(
-    ANativeActivity*,
-    ANativeWindow* window) {
-    auto* state =
-        static_cast<HostState*>(window->getApplication()->instance);
-}
-
 void native_window_created(ANativeActivity* activity, ANativeWindow* window) {
     auto* state = static_cast<HostState*>(activity->instance);
     if (!state || !window) {
@@ -299,13 +291,12 @@ extern "C" void ANativeActivity_onCreate(
     auto* state = new HostState();
     activity->instance = state;
 
-    auto& callbacks = *activity->callbacks;
-    callbacks->onNativeWindowCreated = native_window_created;
-    callbacks->onNativeWindowResized = native_window_resized;
-    callbacks->onNativeWindowDestroyed = native_window_destroyed;
-    callbacks->onInputQueueCreated = input_queue_created;
-    callbacks->onInputQueueDestroyed = input_queue_destroyed;
-    callbacks->onDestroy = on_destroy;
+    activity->callbacks->onNativeWindowCreated = native_window_created;
+    activity->callbacks->onNativeWindowResized = native_window_resized;
+    activity->callbacks->onNativeWindowDestroyed = native_window_destroyed;
+    activity->callbacks->onInputQueueCreated = input_queue_created;
+    activity->callbacks->onInputQueueDestroyed = input_queue_destroyed;
+    activity->callbacks->onDestroy = on_destroy;
 
     const std::string games_root =
         std::string(activity->internalDataPath) + "/games";
