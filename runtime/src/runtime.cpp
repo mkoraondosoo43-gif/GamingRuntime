@@ -25,7 +25,7 @@ std::string read_file(const std::string& path) {
 
 std::string json_string(const std::string& text, const std::string& key) {
     const std::regex pattern(
-        """ + key + ""\s*:\s*"([^"]*)"");
+        "\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
 
     std::smatch match;
     if (!std::regex_search(text, match, pattern)) {
@@ -37,7 +37,7 @@ std::string json_string(const std::string& text, const std::string& key) {
 
 std::uint64_t json_uint64(const std::string& text, const std::string& key) {
     const std::regex pattern(
-        """ + key + ""\s*:\s*([0-9]+)");
+        "\"" + key + "\"\\s*:\\s*([0-9]+)");
 
     std::smatch match;
     if (!std::regex_search(text, match, pattern)) {
