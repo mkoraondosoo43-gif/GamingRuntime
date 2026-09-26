@@ -28,6 +28,7 @@ public:
     explicit Runtime(RuntimeConfig config = {});
 
     bool load_game(const GamePackage& package);
+    bool load_manifest(const std::string& manifest_path);
     bool can_run_locally() const;
     void tick(double delta_seconds);
 
