@@ -205,7 +205,7 @@ int main() {
     runtime.set_input_button(2, true);
     assert(runtime.memory().used_bytes() == 128ULL * 1024ULL * 1024ULL);
 
-    auto renderer = std::make_unique<gaming_runtime::NullRenderer>();
+    auto renderer = std::make_unique<gaming_runtime::SoftwareRenderer>();
     auto* renderer_ptr = renderer.get();
     assert(runtime.attach_renderer(std::move(renderer), 1280, 720));
 
@@ -275,7 +275,10 @@ int main() {
     assert(runtime.frame_state().frame_number == 2);
     assert(runtime.frame_state().frame_over_budget);
     assert(renderer_ptr->submitted_frames() == 2);
-    assert(renderer_ptr->last_command_count() == 2);
+    assert(renderer_ptr->framebuffer().valid());
+    assert(renderer_ptr->framebuffer().width == 1280);
+    assert(renderer_ptr->framebuffer().height == 720);
+    assert(renderer_ptr->framebuffer().size_bytes == 1280ULL * 720ULL * 4ULL);
     assert(audio_ptr->submitted_frames() == 2);
     assert(audio_ptr->last_command_count() == 1);
     assert(display_ptr->presented_frames() == 2);
