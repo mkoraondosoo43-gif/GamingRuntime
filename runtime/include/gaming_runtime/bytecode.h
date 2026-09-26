@@ -19,6 +19,8 @@ enum class BytecodeOp : std::uint8_t {
     CompareEqual,
     Jump,
     JumpIfZero,
+    LoadMemory,
+    StoreMemory,
     Halt
 };
 
@@ -36,6 +38,7 @@ public:
     void shutdown() override;
 
     std::int64_t register_value(std::size_t index) const;
+    std::int64_t memory_value(std::size_t index) const;
     bool halted() const noexcept;
 
 private:
@@ -44,6 +47,7 @@ private:
     std::string program_path_;
     std::vector<BytecodeInstruction> program_;
     std::int64_t registers_[8]{};
+    std::int64_t memory_[256]{};
     std::vector<std::int64_t> stack_;
     std::size_t instruction_pointer_ = 0;
     bool initialized_ = false;
