@@ -54,6 +54,10 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         out = {BytecodeOp::Jump, value};
     } else if (op == "JZ") {
         out = {BytecodeOp::JumpIfZero, value};
+    } else if (op == "LOAD") {
+        out = {BytecodeOp::LoadMemory, value};
+    } else if (op == "STORE") {
+        out = {BytecodeOp::StoreMemory, value};
     } else {
         return false;
     }
@@ -101,6 +105,7 @@ bool BytecodeGameModule::initialize() {
     }
 
     std::fill(std::begin(registers_), std::end(registers_), 0);
+    std::fill(std::begin(memory_), std::end(memory_), 0);
     stack_.clear();
     instruction_pointer_ = 0;
     halted_ = false;
@@ -215,6 +220,25 @@ void BytecodeGameModule::update(const GameFrameContext&) {
             }
             break;
 
+        case BytecodeOp::LoadMemory:
+            if (instruction.operand < 0 || instruction.operand >= 256 ||
+                stack_.size() >= 1024) {
+                halted_ = true;
+                break;
+            }
+            stack_.push_back(memory_[instruction.operand]);
+            break;
+
+        case BytecodeOp::StoreMemory:
+            if (instruction.operand < 0 || instruction.operand >= 256 ||
+                stack_.empty()) {
+                halted_ = true;
+                break;
+            }
+            memory_[instruction.operand] = stack_.back();
+            stack_.pop_back();
+            break;
+
         case BytecodeOp::Halt:
             halted_ = true;
             break;
@@ -237,6 +261,14 @@ std::int64_t BytecodeGameModule::register_value(std::size_t index) const {
     }
 
     return registers_[index];
+}
+
+std::int64_t BytecodeGameModule::memory_value(std::size_t index) const {
+    if (index >= 256) {
+        return 0;
+    }
+
+    return memory_[index];
 }
 
 bool BytecodeGameModule::halted() const noexcept {
