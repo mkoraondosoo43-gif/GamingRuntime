@@ -1,6 +1,7 @@
 #include "gaming_runtime/android_surface_display.h"
 
 #include <android/native_window.h>
+#include <android/rect.h>
 
 #include <cstring>
 
