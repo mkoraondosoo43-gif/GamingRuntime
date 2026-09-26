@@ -283,6 +283,7 @@ void Runtime::tick(double delta_seconds) {
         GameFrameContext context;
         context.frame_number = frame_.frame_number;
         context.delta_seconds = frame_.delta_seconds;
+        context.input = &input_manager_.state();
         game_module_->update(context);
 
         if (renderer_ && renderer_started_) {
@@ -364,3 +365,19 @@ bool Runtime::load_texture_asset(std::uint32_t resource_id,
 }
 
 } // namespace gaming_runtime
+
+void gaming_runtime::Runtime::set_input_button(std::size_t button, bool down) {
+    input_manager_.set_button(button, down);
+}
+
+void gaming_runtime::Runtime::set_input_axis(std::size_t axis, float value) {
+    input_manager_.set_axis(axis, value);
+}
+
+void gaming_runtime::Runtime::set_pointer_input(float x, float y, bool down) {
+    input_manager_.set_pointer(x, y, down);
+}
+
+const gaming_runtime::InputState& gaming_runtime::Runtime::input_state() const noexcept {
+    return input_manager_.state();
+}
