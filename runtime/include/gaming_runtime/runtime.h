@@ -9,6 +9,7 @@
 #include "gaming_runtime/game_module.h"
 #include "gaming_runtime/input.h"
 #include "gaming_runtime/memory.h"
+#include "gaming_runtime/frame_scheduler.h"
 #include "gaming_runtime/render.h"
 
 namespace gaming_runtime {
@@ -34,6 +35,8 @@ struct GamePackage {
 struct FrameState {
     std::uint64_t frame_number = 0;
     double delta_seconds = 0.0;
+    double frame_budget_seconds = 0.0;
+    bool frame_over_budget = false;
 };
 
 class Runtime {
@@ -73,6 +76,7 @@ public:
     void set_pointer_input(float x, float y, bool down);
     const InputState& input_state() const noexcept;
     const MemoryManager& memory() const noexcept;
+    const FrameScheduler& frame_scheduler() const noexcept;
 
 private:
     RuntimeConfig config_;
@@ -83,6 +87,7 @@ private:
     RenderFrame render_frame_;
     InputManager input_manager_;
     MemoryManager memory_manager_;
+    FrameScheduler frame_scheduler_;
     std::unordered_map<std::uint32_t, std::uint64_t> texture_memory_;
     std::unique_ptr<Renderer> renderer_;
     std::uint64_t renderer_memory_bytes_ = 0;
