@@ -54,7 +54,10 @@ std::uint64_t json_uint64(const std::string& text, const std::string& key) {
 } // namespace
 
 Runtime::Runtime(RuntimeConfig config)
-    : config_(config), render_frame_(4096), memory_manager_(config.max_memory_mb) {}
+    : config_(config),
+      render_frame_(4096),
+      memory_manager_(config.max_memory_mb),
+      frame_scheduler_(config.target_fps) {}
 
 bool Runtime::load_game(const GamePackage& package) {
     if (package.format_version != config_.supported_package_format ||
@@ -293,9 +296,11 @@ void Runtime::tick(double delta_seconds) {
         return;
     }
 
-    const double clamped = std::clamp(delta_seconds, 0.0, 0.25);
+    const double clamped = frame_scheduler_.clamp_delta(delta_seconds);
 
     frame_.delta_seconds = clamped;
+    frame_.frame_budget_seconds = frame_scheduler_.frame_budget_seconds();
+    frame_.frame_over_budget = frame_scheduler_.is_over_budget(delta_seconds);
     ++frame_.frame_number;
 
     render_frame_.reset();
@@ -470,4 +475,8 @@ const gaming_runtime::InputState& gaming_runtime::Runtime::input_state() const n
 
 const gaming_runtime::MemoryManager& gaming_runtime::Runtime::memory() const noexcept {
     return memory_manager_;
+}
+
+const gaming_runtime::FrameScheduler& gaming_runtime::Runtime::frame_scheduler() const noexcept {
+    return frame_scheduler_;
 }
