@@ -286,7 +286,7 @@ int main() {
     assert(module_ptr->last_frame == 2);
     assert(module_ptr->last_delta > 0.0);
 
-    const memory_before_resize = runtime.memory().used_bytes();
+    const auto memory_before_resize = runtime.memory().used_bytes();
     assert(runtime.resize_display(640, 360));
     assert(display_ptr->width() == 640);
     assert(display_ptr->height() == 360);
