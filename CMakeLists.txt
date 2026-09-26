@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(GamingRuntime VERSION 1.4.0 LANGUAGES CXX)
+project(GamingRuntime VERSION 1.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,6 +12,7 @@ add_library(gaming_runtime
     runtime/src/bytecode.cpp
     runtime/src/asset_manager.cpp
     runtime/src/render.cpp
+    runtime/src/input.cpp
 )
 
 target_include_directories(gaming_runtime
