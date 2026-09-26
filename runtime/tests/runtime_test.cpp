@@ -155,6 +155,25 @@ int main() {
         module.shutdown();
     }
 
+    {
+        const std::filesystem::path memory_program = game / "memory.bc";
+        {
+            std::ofstream program(memory_program);
+            program << "PUSH 1234\n";
+            program << "STORE 5\n";
+            program << "LOAD 5\n";
+            program << "SET 2\n";
+            program << "HALT\n";
+        }
+
+        gaming_runtime::BytecodeGameModule module(memory_program.string());
+        assert(module.initialize());
+        module.update({.frame_number = 1, .delta_seconds = 1.0 / 60.0});
+        assert(module.memory_value(5) == 1234);
+        assert(module.register_value(2) == 1234);
+        module.shutdown();
+    }
+
     assert(runtime.load_bytecode_module(bytecode.string()));
     assert(runtime.start_game());
     runtime.tick(1.0 / 60.0);
