@@ -7,6 +7,7 @@
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/game_module.h"
 #include "gaming_runtime/input.h"
+#include "gaming_runtime/memory.h"
 #include "gaming_runtime/render.h"
 
 namespace gaming_runtime {
@@ -69,6 +70,7 @@ public:
     void set_input_axis(std::size_t axis, float value);
     void set_pointer_input(float x, float y, bool down);
     const InputState& input_state() const noexcept;
+    const MemoryManager& memory() const noexcept;
 
 private:
     RuntimeConfig config_;
@@ -78,6 +80,7 @@ private:
     AssetManager asset_manager_;
     RenderFrame render_frame_;
     InputManager input_manager_;
+    MemoryManager memory_manager_;
     std::unique_ptr<Renderer> renderer_;
     bool renderer_started_ = false;
     bool game_loaded_ = false;
