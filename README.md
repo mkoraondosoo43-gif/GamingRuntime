@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Software Rendering Backend v1.3
+## Current milestone: Texture Resource Rendering v1.4
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -70,9 +70,22 @@ This stores `100` in memory slot 5, reads it back, and places it in register 0. 
 
 GamingRuntime now includes a deterministic CPU-based `SoftwareRenderer`. It consumes the same runtime render commands and produces an RGBA8 framebuffer. This makes the rendering path executable and testable without depending on Android, Vulkan, OpenGL ES, or a physical GPU.
 
-The software backend currently rasterizes clear and rectangle commands. It is a foundation for validating the runtime graphics pipeline; it is not intended to replace a hardware-accelerated Android backend.
+The software backend now rasterizes clear, rectangle, and registered RGBA8 texture resources. It remains a development and compatibility foundation rather than the final hardware-accelerated Android backend.
 
 Framebuffer allocation is capped at 16 million pixels to keep accidental allocations bounded.
+
+
+### Texture resources
+
+v1.4 adds an end-to-end runtime texture path. Game assets are read by the runtime AssetManager, validated as raw RGBA8 data, uploaded through the Renderer boundary, and sampled by SoftwareRenderer when a draw-quad command references the resource ID.
+
+The first runtime-native texture format is raw RGBA8: exactly width * height * 4 bytes, row-major, four bytes per pixel. PNG/JPEG decoding is intentionally not claimed yet; this keeps the resource pipeline real and deterministic before adding image decoders.
+
+Example:
+
+    runtime.load_texture_asset(12, "textures/checker.rgba", 2, 2);
+
+This reads exactly 16 bytes for a 2x2 texture and uploads them under resource ID 12.
 
 ### Runtime rendering interface
 
@@ -163,4 +176,4 @@ Invalid arithmetic stack usage or invalid register access halts the module inste
 
 ## Build
 
-The core is portable C++17 and can later be integrated into an Android NDK/AOSP-based system. The renderer boundary is designed so platform graphics backends can be added separately. The renderer boundary is designed so platform graphics backends can be added separately.
+The core is portable C++17 and can later be integrated into an Android NDK/AOSP-based system. The renderer boundary is designed so platform graphics backends can be added separately.
