@@ -2,7 +2,9 @@
 
 #include <cstdint>
 
+#include "gaming_runtime/audio.h"
 #include "gaming_runtime/input.h"
+#include "gaming_runtime/render.h"
 
 namespace gaming_runtime {
 
@@ -10,6 +12,8 @@ struct GameFrameContext {
     std::uint64_t frame_number = 0;
     double delta_seconds = 0.0;
     const InputState* input = nullptr;
+    RenderFrame* render = nullptr;
+    AudioFrame* audio = nullptr;
 };
 
 class GameModule {
