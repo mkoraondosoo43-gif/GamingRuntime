@@ -50,6 +50,25 @@ public:
     virtual std::uint64_t memory_bytes() const noexcept = 0;
 };
 
+#if defined(__ANDROID__)
+class AndroidAudio final : public AudioBackend {
+public:
+    AndroidAudio() = default;
+    ~AndroidAudio() override;
+    AndroidAudio(const AndroidAudio&) = delete;
+    AndroidAudio& operator=(const AndroidAudio&) = delete;
+
+    bool initialize(std::uint32_t sample_rate, std::uint32_t channels) override;
+    bool submit(const AudioFrame& frame) override;
+    void shutdown() override;
+    std::uint64_t memory_bytes() const noexcept override;
+
+private:
+    struct Impl;
+    Impl* impl_ = nullptr;
+};
+#endif
+
 class NullAudio final : public AudioBackend {
 public:
     bool initialize(std::uint32_t sample_rate,
