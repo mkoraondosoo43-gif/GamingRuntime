@@ -6,9 +6,6 @@
 
 #include <android/native_window.h>
 
-#include <limits>
-#include <utility>
-
 namespace gaming_runtime {
 
 AndroidRuntimeHost::AndroidRuntimeHost(Runtime& runtime)
@@ -50,12 +47,20 @@ bool AndroidRuntimeHost::attach_surface(ANativeWindow* window) {
     return true;
 }
 
-bool AndroidRuntimeHost::resize_surface() {
-    if (!runtime_ || !surface_attached_) {
+bool AndroidRuntimeHost::resize_surface(
+    std::uint32_t width,
+    std::uint32_t height) {
+    if (!runtime_ || !surface_attached_ || width == 0 || height == 0) {
         return false;
     }
 
-    return runtime_->resize_display(surface_width_, surface_height_);
+    if (!runtime_->resize_display(width, height)) {
+        return false;
+    }
+
+    surface_width_ = width;
+    surface_height_ = height;
+    return true;
 }
 
 void AndroidRuntimeHost::detach_surface() noexcept {
