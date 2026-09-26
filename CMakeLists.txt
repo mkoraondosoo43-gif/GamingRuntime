@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(GamingRuntime VERSION 2.4.0 LANGUAGES CXX)
+project(GamingRuntime VERSION 2.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,28 +27,46 @@ target_include_directories(gaming_runtime
         runtime/include
 )
 
-add_executable(runtime_test
-    runtime/tests/runtime_test.cpp
-)
+if(NOT ANDROID)
+    add_executable(runtime_test
+        runtime/tests/runtime_test.cpp
+    )
 
-target_link_libraries(runtime_test
-    PRIVATE
-        gaming_runtime
-)
+    target_link_libraries(runtime_test
+        PRIVATE
+            gaming_runtime
+    )
 
-add_executable(storage_test
-    runtime/tests/storage_test.cpp
-)
+    add_executable(storage_test
+        runtime/tests/storage_test.cpp
+    )
 
-target_link_libraries(storage_test
-    PRIVATE
-        gaming_runtime
-)
+    target_link_libraries(storage_test
+        PRIVATE
+            gaming_runtime
+    )
 
-enable_testing()
-add_test(NAME RuntimeCoreTest COMMAND runtime_test)
-add_test(NAME StorageTest COMMAND storage_test)
+    enable_testing()
+    add_test(NAME RuntimeCoreTest COMMAND runtime_test)
+    add_test(NAME StorageTest COMMAND storage_test)
+endif()
 
 if(ANDROID)
     target_link_libraries(gaming_runtime PRIVATE android)
+
+    add_library(gaming_runtime_android SHARED
+        runtime/src/android_native_activity.cpp
+    )
+
+    target_include_directories(gaming_runtime_android
+        PRIVATE
+            runtime/include
+    )
+
+    target_link_libraries(gaming_runtime_android
+        PRIVATE
+            gaming_runtime
+            android
+            log
+    )
 endif()
