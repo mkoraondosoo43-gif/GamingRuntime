@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Asset Management v1.1
+## Current milestone: Runtime Rendering Interface v1.2
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -21,6 +21,9 @@ The bytecode VM can:
 - persist game state in 256 runtime-owned memory slots;
 - load/store game memory with `LOAD` and `STORE`;
 - load and enumerate package assets through a runtime-owned asset manager;
+- build bounded runtime render frames with clear and quad commands;
+- submit render frames through a renderer interface;
+- provide a NullRenderer for backend-independent testing;
 - safely read bounded asset files;
 - reject asset paths that escape the package asset directory;
 - run through the existing GameModule lifecycle.
@@ -57,6 +60,14 @@ Example:
     HALT
 
 This stores `100` in memory slot 5, reads it back, and places it in register 0. Invalid memory indexes halt execution.
+
+### Runtime rendering interface
+
+GamingRuntime now owns a small rendering command layer. Games can build a bounded `RenderFrame` containing clear and quad commands, while the runtime submits that frame to a `Renderer` backend. `NullRenderer` provides a backend-independent implementation for testing.
+
+The rendering interface deliberately does not pretend to be a GPU API yet. A future Android backend can translate these runtime commands to Vulkan, OpenGL ES, or another supported graphics API without changing the game-facing runtime boundary.
+
+The default frame command limit is 4096 commands.
 
 ### Runtime asset management
 
@@ -131,4 +142,4 @@ Invalid arithmetic stack usage or invalid register access halts the module inste
 
 ## Build
 
-The core is portable C++17 and can later be integrated into an Android NDK/AOSP-based system.
+The core is portable C++17 and can later be integrated into an Android NDK/AOSP-based system. The renderer boundary is designed so platform graphics backends can be added separately.
