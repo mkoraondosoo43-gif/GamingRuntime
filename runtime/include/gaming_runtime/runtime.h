@@ -22,6 +22,7 @@ struct GamePackage {
     std::string entry_point;
     std::string root_directory;
     std::string assets_directory;
+    std::string bytecode_path;
     std::uint64_t estimated_memory_mb = 0;
 };
 
