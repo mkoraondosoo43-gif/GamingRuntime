@@ -136,12 +136,19 @@ bool Runtime::load_game(const GamePackage& package) {
     game_started_ = false;
     game_module_.reset();
     render_frame_.reset();
+    audio_frame_.reset();
     if (renderer_ && renderer_started_) {
         renderer_->shutdown();
     }
     renderer_.reset();
     renderer_memory_bytes_ = 0;
     renderer_started_ = false;
+    if (audio_ && audio_started_) {
+        audio_->shutdown();
+    }
+    audio_.reset();
+    audio_memory_bytes_ = 0;
+    audio_started_ = false;
     input_manager_.clear();
     game_loaded_ = true;
     return true;
@@ -309,6 +316,7 @@ void Runtime::stop_game() {
     }
 
     render_frame_.reset();
+    audio_frame_.reset();
     game_started_ = false;
 }
 
@@ -343,6 +351,10 @@ void Runtime::tick(double delta_seconds) {
 
         if (renderer_ && renderer_started_) {
             renderer_->submit(render_frame_);
+        }
+
+        if (audio_ && audio_started_) {
+            audio_->submit(audio_frame_);
         }
     }
 }
@@ -408,6 +420,57 @@ bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
         renderer_.reset();
         renderer_memory_bytes_ = 0;
         renderer_started_ = false;
+        return false;
+    }
+
+    return true;
+}
+
+AudioFrame& Runtime::audio_frame() noexcept {
+    return audio_frame_;
+}
+
+const AudioFrame& Runtime::audio_frame() const noexcept {
+    return audio_frame_;
+}
+
+bool Runtime::attach_audio(std::unique_ptr<AudioBackend> audio,
+                           std::uint32_t sample_rate,
+                           std::uint32_t channels) {
+    if (!game_loaded_ || game_started_ || !audio ||
+        sample_rate == 0 || channels == 0) {
+        return false;
+    }
+
+    if (!audio->initialize(sample_rate, channels)) {
+        return false;
+    }
+
+    const std::uint64_t new_bytes = audio->memory_bytes();
+    const std::uint64_t old_bytes =
+        audio_started_ ? audio_memory_bytes_ : 0;
+
+    const std::uint64_t available_bytes = memory_manager_.available_bytes();
+    if (new_bytes > available_bytes &&
+        new_bytes - available_bytes > old_bytes) {
+        audio->shutdown();
+        return false;
+    }
+
+    if (audio_ && audio_started_) {
+        audio_->shutdown();
+        memory_manager_.release(old_bytes);
+    }
+
+    audio_ = std::move(audio);
+    audio_memory_bytes_ = new_bytes;
+    audio_started_ = true;
+
+    if (!memory_manager_.reserve(new_bytes)) {
+        audio_->shutdown();
+        audio_.reset();
+        audio_memory_bytes_ = 0;
+        audio_started_ = false;
         return false;
     }
 
