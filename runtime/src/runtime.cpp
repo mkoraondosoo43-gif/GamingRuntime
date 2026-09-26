@@ -337,8 +337,8 @@ const RenderFrame& Runtime::render_frame() const noexcept {
 }
 
 bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
-                              std::uint32_t width,
-                              std::uint32_t height) {
+                                  std::uint32_t width,
+                                  std::uint32_t height) {
     if (!game_loaded_ || game_started_ || !renderer ||
         width == 0 || height == 0) {
         return false;
@@ -348,12 +348,22 @@ bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
         renderer_->shutdown();
     }
 
-    renderer_ = std::move(renderer);
-    renderer_started_ = renderer_->initialize(width, height);
-    if (!renderer_started_) {
-        renderer_.reset();
+    renderer_.reset();
+    renderer_started_ = false;
+
+    if (!renderer->initialize(width, height)) {
+        return false;
     }
-    return renderer_started_;
+
+    const std::uint64_t framebuffer_bytes = renderer->memory_bytes();
+    if (!memory_manager_.reserve(framebuffer_bytes)) {
+        renderer->shutdown();
+        return false;
+    }
+
+    renderer_ = std::move(renderer);
+    renderer_started_ = true;
+    return true;
 }
 
 bool Runtime::load_texture_asset(std::uint32_t resource_id,
