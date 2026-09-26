@@ -1,4 +1,5 @@
 #include "gaming_runtime/runtime.h"
+#include "gaming_runtime/bytecode.h"
 
 #include <cassert>
 #include <memory>
@@ -113,6 +114,21 @@ int main() {
     runtime.stop_game();
     assert(!runtime.game_started());
     assert(module_ptr->shutdown_called);
+
+    const std::filesystem::path bytecode = game / "game.bc";
+    {
+        std::ofstream program(bytecode);
+        program << "PUSH 20\n";
+        program << "PUSH 22\n";
+        program << "ADD\n";
+        program << "SET 0\n";
+        program << "HALT\n";
+    }
+
+    assert(runtime.load_bytecode_module(bytecode.string()));
+    assert(runtime.start_game());
+    runtime.tick(1.0 / 60.0);
+    runtime.stop_game();
 
     std::filesystem::remove_all(root);
     return 0;
