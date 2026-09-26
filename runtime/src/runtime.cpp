@@ -54,7 +54,7 @@ std::uint64_t json_uint64(const std::string& text, const std::string& key) {
 } // namespace
 
 Runtime::Runtime(RuntimeConfig config)
-    : config_(config), render_frame_(4096) {}
+    : config_(config), render_frame_(4096), memory_manager_(config.max_memory_mb) {}
 
 bool Runtime::load_game(const GamePackage& package) {
     if (package.format_version != config_.supported_package_format ||
@@ -96,6 +96,15 @@ bool Runtime::load_game(const GamePackage& package) {
     }
 
     if (!asset_manager_.set_root(package.assets_directory)) {
+        return false;
+    }
+
+    const std::uint64_t estimated_bytes =
+        package.estimated_memory_mb > (UINT64_MAX / (1024ULL * 1024ULL))
+            ? UINT64_MAX
+            : package.estimated_memory_mb * 1024ULL * 1024ULL;
+    memory_manager_.clear();
+    if (!memory_manager_.reserve(estimated_bytes)) {
         return false;
     }
 
@@ -381,4 +390,8 @@ void gaming_runtime::Runtime::set_pointer_input(float x, float y, bool down) {
 
 const gaming_runtime::InputState& gaming_runtime::Runtime::input_state() const noexcept {
     return input_manager_.state();
+}
+
+const gaming_runtime::MemoryManager& gaming_runtime::Runtime::memory() const noexcept {
+    return memory_manager_;
 }
