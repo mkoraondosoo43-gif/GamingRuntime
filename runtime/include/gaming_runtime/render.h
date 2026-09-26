@@ -12,6 +12,17 @@ struct Color {
     float a = 1.0f;
 };
 
+struct Texture {
+    std::uint32_t width = 0;
+    std::uint32_t height = 0;
+    std::vector<std::uint8_t> pixels;
+
+    bool valid() const noexcept {
+        return width != 0 && height != 0 &&
+               pixels.size() == static_cast<std::size_t>(width) * height * 4U;
+    }
+};
+
 struct RenderCommand {
     enum class Type : std::uint8_t {
         Clear,
@@ -74,6 +85,10 @@ public:
     bool submit(const RenderFrame& frame) override;
     void shutdown() override;
 
+    bool register_texture(std::uint32_t resource_id, Texture texture);
+    bool unregister_texture(std::uint32_t resource_id);
+    bool has_texture(std::uint32_t resource_id) const noexcept;
+
     std::uint32_t width() const noexcept;
     std::uint32_t height() const noexcept;
     const std::vector<std::uint8_t>& pixels() const noexcept;
@@ -87,6 +102,7 @@ private:
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;
     std::vector<std::uint8_t> pixels_;
+    std::vector<std::pair<std::uint32_t, Texture>> textures_;
     std::uint64_t submitted_frames_ = 0;
 };
 
