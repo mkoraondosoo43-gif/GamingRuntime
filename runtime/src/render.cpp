@@ -90,6 +90,10 @@ bool NullRenderer::unregister_texture(std::uint32_t) {
     return initialized_;
 }
 
+std::uint64_t NullRenderer::memory_bytes() const noexcept {
+    return 0;
+}
+
 void NullRenderer::shutdown() {
     initialized_ = false;
 }
@@ -179,6 +183,10 @@ bool SoftwareRenderer::unregister_texture(std::uint32_t resource_id) {
         }
     }
     return false;
+}
+
+std::uint64_t SoftwareRenderer::memory_bytes() const noexcept {
+    return static_cast<std::uint64_t>(pixels_.size());
 }
 
 bool SoftwareRenderer::has_texture(std::uint32_t resource_id) const noexcept {
