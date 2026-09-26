@@ -2,10 +2,12 @@
 
 #include <android/native_window.h>
 
+#include <cstring>
+
 namespace gaming_runtime {
 
 AndroidSurfaceDisplay::~AndroidSurfaceDisplay() {
-    shutdown();
+    clear_window();
 }
 
 bool AndroidSurfaceDisplay::set_window(ANativeWindow* window) {
@@ -69,8 +71,15 @@ bool AndroidSurfaceDisplay::resize(std::uint32_t width, std::uint32_t height) {
     return initialize(width, height);
 }
 
-bool AndroidSurfaceDisplay::present() {
-    if (!initialized_ || !window_) {
+bool AndroidSurfaceDisplay::present(const FramebufferView& framebuffer) {
+    if (!initialized_ || !window_ || !framebuffer.valid() ||
+        framebuffer.width != width_ || framebuffer.height != height_) {
+        return false;
+    }
+
+    const std::uint64_t row_bytes =
+        static_cast<std::uint64_t>(framebuffer.width) * 4ULL;
+    if (framebuffer.stride_bytes < row_bytes) {
         return false;
     }
 
@@ -81,8 +90,27 @@ bool AndroidSurfaceDisplay::present() {
         return false;
     }
 
-    ANativeWindow_unlockAndPost(window_);
-    return true;
+    bool copied = buffer.bits != nullptr &&
+                  buffer.width >= width_ &&
+                  buffer.height >= height_ &&
+                  buffer.stride >= static_cast<int32_t>(width_);
+
+    if (copied) {
+        const auto* source = framebuffer.pixels;
+        auto* destination = static_cast<std::uint8_t*>(buffer.bits);
+        const std::size_t destination_stride =
+            static_cast<std::size_t>(buffer.stride) * 4U;
+
+        for (std::uint32_t y = 0; y < height_; ++y) {
+            std::memcpy(
+                destination + static_cast<std::size_t>(y) * destination_stride,
+                source + static_cast<std::size_t>(y) * framebuffer.stride_bytes,
+                static_cast<std::size_t>(row_bytes));
+        }
+    }
+
+    const int post_result = ANativeWindow_unlockAndPost(window_);
+    return copied && post_result == 0;
 }
 
 void AndroidSurfaceDisplay::shutdown() {
