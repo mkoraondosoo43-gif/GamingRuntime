@@ -40,6 +40,7 @@ public:
                                 const std::string& storage_root);
 
     bool attach_game_module(std::unique_ptr<GameModule> module);
+    bool load_bytecode_module(const std::string& bytecode_path);
     bool start_game();
     void stop_game();
 
