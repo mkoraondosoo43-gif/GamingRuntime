@@ -8,13 +8,17 @@ namespace gaming_runtime {
 struct RuntimeConfig {
     std::uint32_t target_fps = 60;
     std::uint32_t max_memory_mb = 1024;
+    std::uint32_t supported_package_format = 1;
 };
 
 struct GamePackage {
+    std::uint32_t format_version = 0;
     std::string id;
     std::string name;
     std::string version;
     std::string entry_point;
+    std::string root_directory;
+    std::string assets_directory;
     std::uint64_t estimated_memory_mb = 0;
 };
 
