@@ -2,6 +2,10 @@
 #include "gaming_runtime/bytecode.h"
 #include "gaming_runtime/storage.h"
 
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
+
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -11,6 +15,15 @@
 
 namespace gaming_runtime {
 namespace {
+
+#if defined(__ANDROID__)
+constexpr char kRuntimeLogTag[] = "GamingRuntime";
+void runtime_log(const char* message) {
+    __android_log_print(ANDROID_LOG_INFO, kRuntimeLogTag, "%s", message);
+}
+#else
+void runtime_log(const char*) {}
+#endif
 
 std::string read_file(const std::string& path) {
     std::ifstream file(path);
@@ -363,18 +376,41 @@ void Runtime::tick(double delta_seconds) {
             rendered = renderer_->submit(render_frame_);
         }
 
+        if (frame_.frame_number == 1) {
+            runtime_log(renderer_ && renderer_started_
+                ? (rendered ? "FIRST FRAME: renderer submit OK" : "FIRST FRAME: renderer submit FAILED")
+                : "FIRST FRAME: renderer unavailable");
+        }
+
         if (audio_ && audio_started_) {
             audio_->submit(audio_frame_);
         }
 
         if (display_ && display_started_ && rendered) {
             const FramebufferView framebuffer = renderer_->framebuffer();
-            if (framebuffer.valid() &&
+            const bool valid = framebuffer.valid() &&
                 framebuffer.width == display_->width() &&
-                framebuffer.height == display_->height()) {
-                display_->present(framebuffer);
+                framebuffer.height == display_->height();
+
+            if (frame_.frame_number == 1) {
+                runtime_log(valid
+                    ? "FIRST FRAME: framebuffer valid"
+                    : "FIRST FRAME: framebuffer INVALID/MISMATCH");
             }
+
+            if (valid) {
+                const bool presented = display_->present(framebuffer);
+                if (frame_.frame_number == 1) {
+                    runtime_log(presented
+                        ? "FIRST FRAME: display present OK"
+                        : "FIRST FRAME: display present FAILED");
+                }
+            }
+        } else if (frame_.frame_number == 1) {
+            runtime_log("FIRST FRAME: display path unavailable");
         }
+    } else if (frame_.frame_number == 1) {
+        runtime_log("FIRST FRAME: game not started");
     }
 }
 
