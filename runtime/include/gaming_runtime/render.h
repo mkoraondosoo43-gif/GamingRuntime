@@ -64,6 +64,7 @@ public:
     virtual bool submit(const RenderFrame& frame) = 0;
     virtual bool upload_texture(std::uint32_t resource_id, const Texture& texture) = 0;
     virtual bool unregister_texture(std::uint32_t resource_id) = 0;
+    virtual std::uint64_t memory_bytes() const noexcept = 0;
     virtual void shutdown() = 0;
 };
 
@@ -73,6 +74,7 @@ public:
     bool submit(const RenderFrame& frame) override;
     bool upload_texture(std::uint32_t resource_id, const Texture& texture) override;
     bool unregister_texture(std::uint32_t resource_id) override;
+    std::uint64_t memory_bytes() const noexcept override;
     void shutdown() override;
 
     std::uint64_t submitted_frames() const noexcept;
@@ -93,6 +95,7 @@ public:
 
     bool register_texture(std::uint32_t resource_id, Texture texture);
     bool unregister_texture(std::uint32_t resource_id);
+    std::uint64_t memory_bytes() const noexcept override;
     bool has_texture(std::uint32_t resource_id) const noexcept;
 
     std::uint32_t width() const noexcept;
