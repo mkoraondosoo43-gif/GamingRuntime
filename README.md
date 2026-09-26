@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Input Layer v1.5
+## Current milestone: Runtime Memory Budget v1.6
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -66,6 +66,12 @@ Example:
 
 This stores `100` in memory slot 5, reads it back, and places it in register 0. Invalid memory indexes halt execution.
 
+
+### Runtime memory budget
+
+v1.6 adds a bounded runtime memory accounting layer. Each loaded game reserves its declared `estimated_memory_mb` against the runtime budget before the game becomes active. Oversized packages are rejected without replacing the current runtime state.
+
+The memory manager tracks budget, used bytes, and available bytes. It is an accounting/safety boundary, not virtual RAM: it cannot create physical memory that the device does not have.
 
 ### Runtime input layer
 
@@ -191,6 +197,7 @@ The VM currently limits:
 - registers: 8;
 - game memory slots: 256;
 - asset reads: 16 MiB default per read;
+- runtime memory budget: configured in `RuntimeConfig::max_memory_mb`;
 
 Invalid arithmetic stack usage or invalid register access halts the module instead of continuing with undefined state.
 
