@@ -85,6 +85,7 @@ private:
     MemoryManager memory_manager_;
     std::unordered_map<std::uint32_t, std::uint64_t> texture_memory_;
     std::unique_ptr<Renderer> renderer_;
+    std::uint64_t renderer_memory_bytes_ = 0;
     bool renderer_started_ = false;
     bool game_loaded_ = false;
     bool game_started_ = false;
