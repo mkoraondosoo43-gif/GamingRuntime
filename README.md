@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Game Memory v1.0
+## Current milestone: Runtime Asset Management v1.1
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -20,6 +20,9 @@ The bytecode VM can:
 - branch with `JMP` and `JZ`;
 - persist game state in 256 runtime-owned memory slots;
 - load/store game memory with `LOAD` and `STORE`;
+- load and enumerate package assets through a runtime-owned asset manager;
+- safely read bounded asset files;
+- reject asset paths that escape the package asset directory;
 - run through the existing GameModule lifecycle.
 
 ### Game-control bytecode
@@ -55,7 +58,17 @@ Example:
 
 This stores `100` in memory slot 5, reads it back, and places it in register 0. Invalid memory indexes halt execution.
 
-### Package manifest
+### Runtime asset management
+
+GamingRuntime now treats a package's `assets/` directory as a runtime-owned resource space. The `AssetManager` can check for an asset, enumerate regular files, and read bounded binary data. Relative paths are normalized and rejected when they escape the asset root.
+
+Example package resources:
+
+    assets/
+        textures/hero.bin
+        audio/hit.bin
+
+The runtime initializes the asset manager when a game package loads, so game execution and resource access share the same package boundary.
 
     {
         "format_version": 1,
@@ -112,6 +125,7 @@ The VM currently limits:
 - stack entries: 1024;
 - registers: 8;
 - game memory slots: 256;
+- asset reads: 16 MiB default per read;
 
 Invalid arithmetic stack usage or invalid register access halts the module instead of continuing with undefined state.
 
