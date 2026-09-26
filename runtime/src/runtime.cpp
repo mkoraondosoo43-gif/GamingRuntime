@@ -96,7 +96,25 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
         return false;
     }
 
-    const std::filesystem::path assets_path = package_root / assets_relative;
+    const std::filesystem::path assets_path =
+        (package_root / assets_relative).lexically_normal();
+
+    std::error_code path_error;
+    const std::filesystem::path relative_assets =
+        std::filesystem::relative(
+            package_root.lexically_normal(),
+            assets_path,
+            path_error);
+
+    if (path_error) {
+        return false;
+    }
+
+    const std::string relative_text = relative_assets.generic_string();
+    if (relative_text == ".." ||
+        relative_text.rfind("../", 0) == 0) {
+        return false;
+    }
 
     GamePackage package{
         .format_version = static_cast<std::uint32_t>(
