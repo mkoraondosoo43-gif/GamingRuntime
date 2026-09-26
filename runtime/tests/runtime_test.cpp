@@ -95,6 +95,22 @@ int main() {
     assert(runtime.input_state().axis_value(8) == 0.0f);
     assert(runtime.assets().has_asset("textures/hero.bin"));
     assert(!runtime.assets().has_asset("../game.json"));
+
+    const std::filesystem::path outside_asset = root / "outside.bin";
+    {
+        std::ofstream outside(outside_asset, std::ios::binary);
+        outside << "SECRET";
+    }
+    std::error_code symlink_error;
+    std::filesystem::create_symlink(
+        outside_asset,
+        assets / "textures" / "escape.bin",
+        symlink_error);
+    if (!symlink_error) {
+        assert(!runtime.assets().has_asset("textures/escape.bin"));
+        std::vector<std::uint8_t> escaped_data;
+        assert(!runtime.assets().read_asset("textures/escape.bin", escaped_data));
+    }
     std::vector<std::uint8_t> asset_data;
     assert(runtime.assets().read_asset("audio/hit.bin", asset_data));
     assert(asset_data.size() == 3);
