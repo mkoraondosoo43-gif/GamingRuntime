@@ -62,7 +62,8 @@ bool Runtime::load_game(const GamePackage& package) {
         package.version.empty() ||
         package.entry_point.empty() ||
         package.root_directory.empty() ||
-        package.assets_directory.empty()) {
+        package.assets_directory.empty() ||
+        package.bytecode_path.empty()) {
         return false;
     }
 
@@ -74,6 +75,22 @@ bool Runtime::load_game(const GamePackage& package) {
         error ||
         !std::filesystem::is_directory(assets, error) ||
         error) {
+        return false;
+    }
+
+    if (!std::filesystem::is_regular_file(package.bytecode_path, error) || error) {
+        return false;
+    }
+
+    const std::filesystem::path bytecode(package.bytecode_path);
+    const auto relative_bytecode = std::filesystem::relative(
+        root.lexically_normal(), bytecode.lexically_normal(), error);
+    if (error) {
+        return false;
+    }
+    const std::string relative_bytecode_text = relative_bytecode.generic_string();
+    if (relative_bytecode_text == ".." ||
+        relative_bytecode_text.rfind("../", 0) == 0) {
         return false;
     }
 
@@ -94,8 +111,9 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
     const std::filesystem::path manifest_file(manifest_path);
     const std::filesystem::path package_root = manifest_file.parent_path();
     const std::string assets_relative = json_string(manifest, "assets");
+    const std::string bytecode_relative = json_string(manifest, "bytecode");
 
-    if (assets_relative.empty()) {
+    if (assets_relative.empty() || bytecode_relative.empty()) {
         return false;
     }
 
@@ -119,6 +137,19 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
         return false;
     }
 
+    const std::filesystem::path bytecode_path =
+        (package_root / bytecode_relative).lexically_normal();
+    const auto relative_bytecode = std::filesystem::relative(
+        package_root.lexically_normal(), bytecode_path, path_error);
+    if (path_error) {
+        return false;
+    }
+    const std::string relative_bytecode_text = relative_bytecode.generic_string();
+    if (relative_bytecode_text == ".." ||
+        relative_bytecode_text.rfind("../", 0) == 0) {
+        return false;
+    }
+
     GamePackage package{
         .format_version = static_cast<std::uint32_t>(
             json_uint64(manifest, "format_version")),
@@ -128,10 +159,15 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
         .entry_point = json_string(manifest, "entry_point"),
         .root_directory = package_root.lexically_normal().string(),
         .assets_directory = assets_path.lexically_normal().string(),
+        .bytecode_path = bytecode_path.string(),
         .estimated_memory_mb = json_uint64(manifest, "estimated_memory_mb")
     };
 
-    return load_game(package);
+    if (!load_game(package)) {
+        return false;
+    }
+
+    return load_bytecode_module(package.bytecode_path);
 }
 
 bool Runtime::load_game_from_storage(
@@ -166,11 +202,6 @@ bool Runtime::load_bytecode_module(const std::string& bytecode_path) {
     }
 
     auto module = std::make_unique<BytecodeGameModule>(bytecode_path);
-    if (!module->initialize()) {
-        return false;
-    }
-
-    module->shutdown();
     game_module_ = std::move(module);
     return true;
 }
