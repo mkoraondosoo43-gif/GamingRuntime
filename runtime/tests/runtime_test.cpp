@@ -232,8 +232,18 @@ int main() {
         auto software = std::make_unique<gaming_runtime::SoftwareRenderer>();
         auto* software_ptr = software.get();
         assert(runtime.attach_renderer(std::move(software), 8, 8));
+        const auto memory_before_texture = runtime.memory().used_bytes();
         assert(runtime.load_texture_asset(12, "textures/checker.rgba", 2, 2));
         assert(software_ptr->has_texture(12));
+        assert(runtime.memory().used_bytes() ==
+               memory_before_texture + 16ULL);
+        assert(runtime.load_texture_asset(12, "textures/checker.rgba", 1, 1));
+        assert(runtime.memory().used_bytes() ==
+               memory_before_texture + 4ULL);
+        assert(runtime.unload_texture(12));
+        assert(!software_ptr->has_texture(12));
+        assert(runtime.memory().used_bytes() == memory_before_texture);
+        assert(!runtime.unload_texture(12));
 
         assert(runtime.render_frame().clear({0.0f, 0.0f, 0.0f, 1.0f}));
         assert(runtime.render_frame().draw_quad(0.0f, 0.0f, 4.0f, 4.0f, 12));
