@@ -2,19 +2,19 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Package Format v0.5
+## Current milestone: Game Execution Boundary v0.6
 
-GamingRuntime now understands a validated runtime-owned game package.
+GamingRuntime now has its first real game-execution boundary.
 
-The package layer can:
+The runtime can:
 
-- require a supported package format version;
-- identify a game with id, name, and version;
-- define an entry point for the future execution layer;
-- define a package-owned assets directory;
-- record the package root and resolved assets path;
-- reject packages with missing required fields or missing asset directories;
-- keep local execution checks separate from the future game-code execution engine.
+- validate and load a game package;
+- attach a runtime-owned `GameModule`;
+- initialize the module before execution;
+- provide frame number and delta time to the module;
+- execute the module once per runtime frame;
+- stop the module through an explicit shutdown lifecycle;
+- reject execution when the package is not locally runnable.
 
 ### Package layout
 
@@ -28,25 +28,46 @@ The package layer can:
                 ├── audio/
                 └── ...
 
-### Manifest example
+### Execution flow
 
-    {
-        "format_version": 1,
-        "id": "demo.game",
-        "name": "Runtime Demo",
-        "version": "0.5.0",
-        "entry_point": "main",
-        "assets": "assets",
-        "estimated_memory_mb": 128
-    }
+    Game Package
+          |
+    Runtime Storage
+          |
+    Package Validation
+          |
+    Runtime Core
+          |
+    GameModule
+      initialize()
+          |
+      update(frame)
+          |
+      update(frame)
+          |
+       shutdown()
+          |
+    Platform / Hardware Bridge
+
+### Game module boundary
+
+`GameModule` is the controlled interface between GamingRuntime and actual game logic.
+
+It currently exposes:
+
+- `initialize()`
+- `update(GameFrameContext)`
+- `shutdown()`
+
+This is intentionally an execution boundary, not a fake claim that arbitrary Android, Windows, or console executables can already run.
+
+The next execution layer can plug a real game-code backend into this boundary, such as a sandboxed bytecode/WASM-style module or a native translated module.
 
 ### Architecture
 
-Game Package -> Runtime Storage -> Package Validation -> Runtime Core -> Future Execution Layer -> Platform/Hardware Bridge
+Game Package -> Runtime Storage -> Package Validation -> Runtime Core -> Game Execution Backend -> Graphics/Audio/Input/Memory Systems -> Platform/Hardware Bridge
 
 Android remains the underlying hardware/platform layer while GamingRuntime owns the game execution pipeline.
-
-The entry_point is currently a package boundary only. Actual game-code execution will be implemented in a later milestone rather than being faked by the package loader.
 
 ## Build
 
