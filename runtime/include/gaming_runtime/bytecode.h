@@ -15,6 +15,10 @@ enum class BytecodeOp : std::uint8_t {
     Subtract,
     Multiply,
     Set,
+    Get,
+    CompareEqual,
+    Jump,
+    JumpIfZero,
     Halt
 };
 
