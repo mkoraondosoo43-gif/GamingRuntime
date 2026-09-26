@@ -108,6 +108,7 @@ bool Runtime::load_game(const GamePackage& package) {
     }
 
     memory_manager_.clear();
+    texture_memory_.clear();
     if (!memory_manager_.reserve(estimated_bytes)) {
         return false;
     }
@@ -117,6 +118,11 @@ bool Runtime::load_game(const GamePackage& package) {
     game_started_ = false;
     game_module_.reset();
     render_frame_.reset();
+    if (renderer_ && renderer_started_) {
+        renderer_->shutdown();
+    }
+    renderer_.reset();
+    renderer_started_ = false;
     input_manager_.clear();
     game_loaded_ = true;
     return true;
@@ -373,9 +379,51 @@ bool Runtime::load_texture_asset(std::uint32_t resource_id,
         return false;
     }
 
-    Texture texture{width, height, std::move(data)};
+    const auto existing = texture_memory_.find(resource_id);
+    const std::uint64_t previous_bytes =
+        existing == texture_memory_.end() ? 0 : existing->second;
 
-    return renderer_->upload_texture(resource_id, texture);
+    if (expected_bytes > previous_bytes) {
+        if (!memory_manager_.reserve(expected_bytes - previous_bytes)) {
+            return false;
+        }
+    }
+
+    Texture texture{width, height, std::move(data)};
+    if (!renderer_->upload_texture(resource_id, texture)) {
+        if (expected_bytes > previous_bytes) {
+            memory_manager_.release(expected_bytes - previous_bytes);
+        }
+        return false;
+    }
+
+    if (expected_bytes < previous_bytes) {
+        memory_manager_.release(previous_bytes - expected_bytes);
+    }
+
+    texture_memory_[resource_id] = expected_bytes;
+    return true;
+}
+
+bool Runtime::unload_texture(std::uint32_t resource_id) {
+    if (!game_loaded_ || !renderer_started_ || !renderer_ ||
+        resource_id == 0) {
+        return false;
+    }
+
+    const auto it = texture_memory_.find(resource_id);
+    if (it == texture_memory_.end()) {
+        return false;
+    }
+
+    const bool removed = renderer_->unregister_texture(resource_id);
+    if (!removed) {
+        return false;
+    }
+
+    memory_manager_.release(it->second);
+    texture_memory_.erase(it);
+    return true;
 }
 
 } // namespace gaming_runtime
