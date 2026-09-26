@@ -1,6 +1,7 @@
 #include "gaming_runtime/runtime.h"
 #include "gaming_runtime/bytecode.h"
 #include "gaming_runtime/asset_manager.h"
+#include "gaming_runtime/render.h"
 
 #include <cassert>
 #include <memory>
@@ -75,6 +76,14 @@ int main() {
     assert(asset_data.size() == 3);
     assert(runtime.assets().list_assets().size() == 2);
 
+    auto renderer = std::make_unique<gaming_runtime::NullRenderer>();
+    auto* renderer_ptr = renderer.get();
+    assert(runtime.attach_renderer(std::move(renderer), 1280, 720));
+    assert(runtime.render_frame().size() == 0);
+    assert(runtime.render_frame().clear({0.02f, 0.03f, 0.05f, 1.0f}));
+    assert(runtime.render_frame().draw_quad(10.0f, 20.0f, 100.0f, 50.0f, 7));
+    assert(runtime.render_frame().size() == 2);
+
     {
         std::ofstream invalid_manifest(game / "game.json");
         invalid_manifest << R"({
@@ -139,6 +148,8 @@ int main() {
 
     runtime.tick(1.0 / 60.0);
     assert(runtime.frame_state().frame_number == 1);
+    assert(renderer_ptr->submitted_frames() == 1);
+    assert(renderer_ptr->last_command_count() == 2);
     assert(module_ptr->last_frame == 1);
     assert(module_ptr->last_delta > 0.0);
 
