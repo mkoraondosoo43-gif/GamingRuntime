@@ -24,9 +24,9 @@ public:
 
     bool play(std::uint32_t resource_id,
               float volume = 1.0f,
-              bool loop = false) noexcept;
-    bool stop_all() noexcept;
-    bool set_master_volume(float volume) noexcept;
+              bool loop = false);
+    bool stop_all();
+    bool set_master_volume(float volume);
 
     void reset() noexcept;
     std::size_t size() const noexcept;
