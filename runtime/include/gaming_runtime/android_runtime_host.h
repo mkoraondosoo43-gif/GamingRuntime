@@ -21,7 +21,7 @@ public:
     AndroidRuntimeHost& operator=(const AndroidRuntimeHost&) = delete;
 
     bool attach_surface(ANativeWindow* window);
-    bool resize_surface();
+    bool resize_surface(std::uint32_t width, std::uint32_t height);
     void detach_surface() noexcept;
 
     bool map_key(std::int32_t key_code, std::size_t button);
