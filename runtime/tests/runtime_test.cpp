@@ -274,6 +274,16 @@ int main() {
     }
 
     {
+        gaming_runtime::Runtime constrained({60, 128, 1});
+        assert(constrained.load_game_from_storage("demo.game", root.string()));
+        auto renderer = std::make_unique<gaming_runtime::SoftwareRenderer>();
+        assert(renderer->initialize(128, 128));
+        const auto before = constrained.memory().used_bytes();
+        assert(!constrained.attach_renderer(std::move(renderer), 128, 128));
+        assert(constrained.memory().used_bytes() == before);
+    }
+
+    {
         gaming_runtime::SoftwareRenderer software;
         assert(software.initialize(32, 24));
         gaming_runtime::Texture texture{
