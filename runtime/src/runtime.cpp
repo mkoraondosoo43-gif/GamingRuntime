@@ -87,12 +87,27 @@ bool Runtime::load_game(const GamePackage& package) {
     }
 
     const std::filesystem::path bytecode(package.bytecode_path);
-    const auto relative_bytecode = std::filesystem::relative(
-        root.lexically_normal(), bytecode.lexically_normal(), error);
+    const auto canonical_root =
+        std::filesystem::weakly_canonical(root, error);
     if (error) {
         return false;
     }
-    const std::string relative_bytecode_text = relative_bytecode.generic_string();
+
+    error.clear();
+    const auto canonical_bytecode =
+        std::filesystem::weakly_canonical(bytecode, error);
+    if (error) {
+        return false;
+    }
+
+    const auto relative_bytecode = std::filesystem::relative(
+        canonical_root, canonical_bytecode, error);
+    if (error) {
+        return false;
+    }
+
+    const std::string relative_bytecode_text =
+        relative_bytecode.generic_string();
     if (relative_bytecode_text == ".." ||
         relative_bytecode_text.rfind("../", 0) == 0) {
         return false;
@@ -233,15 +248,29 @@ bool Runtime::load_bytecode_module(const std::string& bytecode_path) {
     std::error_code error;
     const std::filesystem::path root(game_.root_directory);
     const std::filesystem::path bytecode(bytecode_path);
-    const auto relative = std::filesystem::relative(
-        root.lexically_normal(), bytecode.lexically_normal(), error);
-    if (error || relative.generic_string() == ".." ||
-        relative.generic_string().rfind("../", 0) == 0 ||
-        !std::filesystem::is_regular_file(bytecode, error) || error) {
+    const auto canonical_root =
+        std::filesystem::weakly_canonical(root, error);
+    if (error) {
         return false;
     }
 
-    auto module = std::make_unique<BytecodeGameModule>(bytecode_path);
+    error.clear();
+    const auto canonical_bytecode =
+        std::filesystem::weakly_canonical(bytecode, error);
+    if (error) {
+        return false;
+    }
+
+    const auto relative =
+        std::filesystem::relative(canonical_root, canonical_bytecode, error);
+    if (error || relative.generic_string() == ".." ||
+        relative.generic_string().rfind("../", 0) == 0 ||
+        !std::filesystem::is_regular_file(canonical_bytecode, error) || error) {
+        return false;
+    }
+
+    auto module =
+        std::make_unique<BytecodeGameModule>(canonical_bytecode.string());
     game_module_ = std::move(module);
     return true;
 }
