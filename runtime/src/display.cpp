@@ -26,6 +26,7 @@ bool NullDisplay::initialize(std::uint32_t width, std::uint32_t height) {
     width_ = width;
     height_ = height;
     presented_frames_ = 0;
+    last_framebuffer_bytes_ = 0;
     return true;
 }
 
@@ -39,10 +40,18 @@ bool NullDisplay::resize(std::uint32_t width, std::uint32_t height) {
     return true;
 }
 
-bool NullDisplay::present() {
+bool NullDisplay::present(const FramebufferView& framebuffer) {
     if (!initialized_ ||
         presented_frames_ == std::numeric_limits<std::uint64_t>::max()) {
         return false;
+    }
+
+    if (framebuffer.valid() &&
+        framebuffer.width == width_ &&
+        framebuffer.height == height_) {
+        last_framebuffer_bytes_ = framebuffer.size_bytes;
+    } else {
+        last_framebuffer_bytes_ = 0;
     }
 
     ++presented_frames_;
@@ -54,6 +63,7 @@ void NullDisplay::shutdown() {
     width_ = 0;
     height_ = 0;
     presented_frames_ = 0;
+    last_framebuffer_bytes_ = 0;
 }
 
 std::uint32_t NullDisplay::width() const noexcept {
@@ -70,6 +80,10 @@ std::uint64_t NullDisplay::memory_bytes() const noexcept {
 
 std::uint64_t NullDisplay::presented_frames() const noexcept {
     return presented_frames_;
+}
+
+std::size_t NullDisplay::last_framebuffer_bytes() const noexcept {
+    return last_framebuffer_bytes_;
 }
 
 } // namespace gaming_runtime
