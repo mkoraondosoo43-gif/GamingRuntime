@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <utility>
@@ -21,6 +22,24 @@ struct Texture {
     bool valid() const noexcept {
         return width != 0 && height != 0 &&
                pixels.size() == static_cast<std::size_t>(width) * height * 4U;
+    }
+};
+
+struct FramebufferView {
+    const std::uint8_t* pixels = nullptr;
+    std::uint32_t width = 0;
+    std::uint32_t height = 0;
+    std::uint32_t stride_bytes = 0;
+    std::size_t size_bytes = 0;
+
+    bool valid() const noexcept {
+        if (!pixels || width == 0 || height == 0 ||
+            stride_bytes < width * 4U) {
+            return false;
+        }
+
+        return size_bytes >=
+               static_cast<std::size_t>(stride_bytes) * height;
     }
 };
 
@@ -65,6 +84,7 @@ public:
     virtual bool upload_texture(std::uint32_t resource_id, const Texture& texture) = 0;
     virtual bool unregister_texture(std::uint32_t resource_id) = 0;
     virtual std::uint64_t memory_bytes() const noexcept = 0;
+    virtual FramebufferView framebuffer() const noexcept = 0;
     virtual void shutdown() = 0;
 };
 
@@ -75,6 +95,7 @@ public:
     bool upload_texture(std::uint32_t resource_id, const Texture& texture) override;
     bool unregister_texture(std::uint32_t resource_id) override;
     std::uint64_t memory_bytes() const noexcept override;
+    FramebufferView framebuffer() const noexcept override;
     void shutdown() override;
 
     std::uint64_t submitted_frames() const noexcept;
@@ -96,6 +117,7 @@ public:
     bool register_texture(std::uint32_t resource_id, Texture texture);
     bool unregister_texture(std::uint32_t resource_id);
     std::uint64_t memory_bytes() const noexcept override;
+    FramebufferView framebuffer() const noexcept override;
     bool has_texture(std::uint32_t resource_id) const noexcept;
 
     std::uint32_t width() const noexcept;
