@@ -1,6 +1,8 @@
 #include "gaming_runtime/runtime.h"
+#include "gaming_runtime/storage.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <regex>
 #include <sstream>
@@ -81,6 +83,33 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
     };
 
     return load_game(package);
+}
+
+bool Runtime::load_game_from_storage(
+    const std::string& game_id,
+    const std::string& storage_root) {
+
+    if (game_id.empty() || storage_root.empty()) {
+        return false;
+    }
+
+    GameStorage storage(storage_root);
+    const auto games = storage.discover_games();
+
+    for (const auto& stored : games) {
+        const std::filesystem::path manifest_path(stored.manifest_path);
+        const std::string manifest = read_file(stored.manifest_path);
+
+        if (manifest.empty()) {
+            continue;
+        }
+
+        if (json_string(manifest, "id") == game_id) {
+            return load_manifest(stored.manifest_path);
+        }
+    }
+
+    return false;
 }
 
 bool Runtime::can_run_locally() const {
