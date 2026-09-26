@@ -3,6 +3,7 @@
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/render.h"
 #include "gaming_runtime/audio.h"
+#include "gaming_runtime/display.h"
 #include "gaming_runtime/memory.h"
 
 #include <cassert>
@@ -213,6 +214,12 @@ int main() {
     assert(runtime.attach_audio(std::move(audio), 48000, 2));
     assert(audio_ptr->sample_rate() == 48000);
     assert(audio_ptr->channels() == 2);
+
+    auto display = std::make_unique<gaming_runtime::NullDisplay>();
+    auto* display_ptr = display.get();
+    assert(runtime.attach_display(std::move(display), 1280, 720));
+    assert(display_ptr->width() == 1280);
+    assert(display_ptr->height() == 720);
     assert(runtime.render_frame().size() == 0);
     assert(runtime.render_frame().clear({0.02f, 0.03f, 0.05f, 1.0f}));
     assert(runtime.render_frame().draw_quad(10.0f, 20.0f, 100.0f, 50.0f, 7));
@@ -271,6 +278,7 @@ int main() {
     assert(renderer_ptr->last_command_count() == 2);
     assert(audio_ptr->submitted_frames() == 2);
     assert(audio_ptr->last_command_count() == 1);
+    assert(display_ptr->presented_frames() == 2);
     assert(module_ptr->last_frame == 2);
     assert(module_ptr->last_delta > 0.0);
 
