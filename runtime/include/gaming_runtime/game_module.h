@@ -2,11 +2,14 @@
 
 #include <cstdint>
 
+#include "gaming_runtime/input.h"
+
 namespace gaming_runtime {
 
 struct GameFrameContext {
     std::uint64_t frame_number = 0;
     double delta_seconds = 0.0;
+    const InputState* input = nullptr;
 };
 
 class GameModule {
