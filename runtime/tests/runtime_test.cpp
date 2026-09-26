@@ -7,6 +7,7 @@
 #include <memory>
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
 int main() {
     const std::filesystem::path root = "runtime_test_library";
@@ -25,6 +26,17 @@ int main() {
     {
         std::ofstream audio(assets / "audio" / "hit.bin", std::ios::binary);
         audio << "HIT";
+    }
+
+    {
+        const std::uint8_t texture[] = {
+            255, 0, 0, 255,
+            0, 255, 0, 255,
+            0, 0, 255, 255,
+            255, 255, 0, 255
+        };
+        std::ofstream file(assets / "textures" / "checker.rgba", std::ios::binary);
+        file.write(reinterpret_cast<const char*>(texture), sizeof(texture));
     }
 
     {
@@ -165,19 +177,33 @@ int main() {
     {
         gaming_runtime::SoftwareRenderer software;
         assert(software.initialize(32, 24));
+        gaming_runtime::Texture texture{
+            .width = 2,
+            .height = 2,
+            .pixels = {
+                255, 0, 0, 255,
+                0, 255, 0, 255,
+                0, 0, 255, 255,
+                255, 255, 0, 255
+            }
+        };
+        assert(software.upload_texture(9, texture));
+        assert(software.has_texture(9));
         gaming_runtime::RenderFrame frame;
         assert(frame.clear({0.1f, 0.2f, 0.3f, 1.0f}));
-        assert(frame.draw_quad(4.0f, 5.0f, 8.0f, 6.0f, 1));
+        assert(frame.draw_quad(4.0f, 5.0f, 8.0f, 6.0f, 9));
         assert(software.submit(frame));
         assert(software.width() == 32);
         assert(software.height() == 24);
         assert(software.pixels().size() == 32U * 24U * 4U);
         const auto& pixels = software.pixels();
         const std::size_t quad_pixel = (5U * 32U + 4U) * 4U;
-        assert(pixels[quad_pixel] == 51);
-        assert(pixels[quad_pixel + 1] == 179);
-        assert(pixels[quad_pixel + 2] == 255);
+        assert(pixels[quad_pixel] == 255);
+        assert(pixels[quad_pixel + 1] == 0);
+        assert(pixels[quad_pixel + 2] == 0);
         assert(pixels[quad_pixel + 3] == 255);
+        assert(software.unregister_texture(9));
+        assert(!software.has_texture(9));
         software.shutdown();
         assert(software.pixels().empty());
     }
