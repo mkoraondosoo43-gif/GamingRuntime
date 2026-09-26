@@ -7,6 +7,7 @@
 
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/audio.h"
+#include "gaming_runtime/display.h"
 #include "gaming_runtime/game_module.h"
 #include "gaming_runtime/input.h"
 #include "gaming_runtime/memory.h"
@@ -78,6 +79,10 @@ public:
                       std::uint32_t sample_rate,
                       std::uint32_t channels);
 
+    bool attach_display(std::unique_ptr<DisplayBackend> display,
+                        std::uint32_t width,
+                        std::uint32_t height);
+
     void set_input_button(std::size_t button, bool down);
     void set_input_axis(std::size_t axis, float value);
     void set_pointer_input(float x, float y, bool down);
@@ -101,8 +106,11 @@ private:
     std::uint64_t renderer_memory_bytes_ = 0;
     std::unique_ptr<AudioBackend> audio_;
     std::uint64_t audio_memory_bytes_ = 0;
+    std::unique_ptr<DisplayBackend> display_;
+    std::uint64_t display_memory_bytes_ = 0;
     bool renderer_started_ = false;
     bool audio_started_ = false;
+    bool display_started_ = false;
     bool game_loaded_ = false;
     bool game_started_ = false;
 };
