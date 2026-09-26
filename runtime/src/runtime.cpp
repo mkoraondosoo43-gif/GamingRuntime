@@ -1,4 +1,5 @@
 #include "gaming_runtime/runtime.h"
+#include "gaming_runtime/bytecode.h"
 #include "gaming_runtime/storage.h"
 
 #include <algorithm>
@@ -157,6 +158,21 @@ bool Runtime::load_game_from_storage(
     }
 
     return false;
+}
+
+bool Runtime::load_bytecode_module(const std::string& bytecode_path) {
+    if (!game_loaded_ || game_started_ || bytecode_path.empty()) {
+        return false;
+    }
+
+    auto module = std::make_unique<BytecodeGameModule>(bytecode_path);
+    if (!module->initialize()) {
+        return false;
+    }
+
+    module->shutdown();
+    game_module_ = std::move(module);
+    return true;
 }
 
 bool Runtime::attach_game_module(std::unique_ptr<GameModule> module) {
