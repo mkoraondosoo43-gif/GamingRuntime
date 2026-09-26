@@ -33,13 +33,18 @@ struct FramebufferView {
     std::size_t size_bytes = 0;
 
     bool valid() const noexcept {
+        const std::uint64_t minimum_stride =
+            static_cast<std::uint64_t>(width) * 4ULL;
         if (!pixels || width == 0 || height == 0 ||
-            stride_bytes < width * 4U) {
+            static_cast<std::uint64_t>(stride_bytes) < minimum_stride) {
             return false;
         }
 
-        return size_bytes >=
-               static_cast<std::size_t>(stride_bytes) * height;
+        const std::uint64_t required_bytes =
+            static_cast<std::uint64_t>(stride_bytes) *
+            static_cast<std::uint64_t>(height);
+        return required_bytes <=
+               static_cast<std::uint64_t>(size_bytes);
     }
 };
 
