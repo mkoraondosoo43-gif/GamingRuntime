@@ -607,6 +607,14 @@ bool Runtime::unload_texture(std::uint32_t resource_id) {
 
 } // namespace gaming_runtime
 
+gaming_runtime::InputManager& gaming_runtime::Runtime::input_manager() noexcept {
+    return input_manager_;
+}
+
+const gaming_runtime::InputManager& gaming_runtime::Runtime::input_manager() const noexcept {
+    return input_manager_;
+}
+
 void gaming_runtime::Runtime::set_input_button(std::size_t button, bool down) {
     input_manager_.set_button(button, down);
 }
