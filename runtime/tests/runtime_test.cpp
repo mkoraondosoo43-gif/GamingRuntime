@@ -77,6 +77,9 @@ int main() {
     assert(runtime.loaded_game().assets_directory ==
            assets.lexically_normal().string());
     assert(runtime.can_run_locally());
+    assert(runtime.memory().used_bytes() == 128ULL * 1024ULL * 1024ULL);
+    assert(runtime.memory().available_bytes() ==
+           (512ULL - 128ULL) * 1024ULL * 1024ULL);
     runtime.set_input_button(2, true);
     runtime.set_input_axis(0, 1.5f);
     runtime.set_pointer_input(120.0f, 80.0f, true);
@@ -156,6 +159,7 @@ int main() {
 
     assert(runtime.load_manifest((game / "game.json").string()));
     runtime.set_input_button(2, true);
+    assert(runtime.memory().used_bytes() == 128ULL * 1024ULL * 1024ULL);
 
     class TestGame final : public gaming_runtime::GameModule {
     public:
