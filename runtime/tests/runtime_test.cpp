@@ -118,12 +118,16 @@ int main() {
 
     class TestGame final : public gaming_runtime::GameModule {
     public:
+        explicit TestGame(gaming_runtime::RenderFrame& frame) : frame(frame) {}
+
         bool initialize() override {
             initialized = true;
             return true;
         }
 
         void update(const gaming_runtime::GameFrameContext& context) override {
+            frame.clear({0.0f, 0.0f, 0.0f, 1.0f});
+            frame.draw_quad(2.0f, 3.0f, 10.0f, 8.0f, 7);
             last_frame = context.frame_number;
             last_delta = context.delta_seconds;
         }
@@ -136,9 +140,10 @@ int main() {
         bool shutdown_called = false;
         std::uint64_t last_frame = 0;
         double last_delta = 0.0;
+        gaming_runtime::RenderFrame& frame;
     };
 
-    auto module = std::make_unique<TestGame>();
+    auto module = std::make_unique<TestGame>(runtime.render_frame());
     auto* module_ptr = module.get();
 
     assert(runtime.attach_game_module(std::move(module)));
@@ -156,6 +161,26 @@ int main() {
     runtime.stop_game();
     assert(!runtime.game_started());
     assert(module_ptr->shutdown_called);
+
+    {
+        gaming_runtime::SoftwareRenderer software;
+        assert(software.initialize(32, 24));
+        gaming_runtime::RenderFrame frame;
+        assert(frame.clear({0.1f, 0.2f, 0.3f, 1.0f}));
+        assert(frame.draw_quad(4.0f, 5.0f, 8.0f, 6.0f, 1));
+        assert(software.submit(frame));
+        assert(software.width() == 32);
+        assert(software.height() == 24);
+        assert(software.pixels().size() == 32U * 24U * 4U);
+        const auto& pixels = software.pixels();
+        const std::size_t quad_pixel = (5U * 32U + 4U) * 4U;
+        assert(pixels[quad_pixel] == 51);
+        assert(pixels[quad_pixel + 1] == 179);
+        assert(pixels[quad_pixel + 2] == 255);
+        assert(pixels[quad_pixel + 3] == 255);
+        software.shutdown();
+        assert(software.pixels().empty());
+    }
 
     {
         const std::filesystem::path branch_program = game / "branch.bc";
