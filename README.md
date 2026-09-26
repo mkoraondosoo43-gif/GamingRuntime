@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Frame Budget Scheduler v1.9
+## Current milestone: Runtime Audio Boundary v2.0
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -32,6 +32,15 @@ The bytecode VM can:
 - safely read bounded asset files;
 - reject asset paths that escape the package asset directory;
 - run through the existing GameModule lifecycle.
+
+
+### Runtime audio boundary
+
+v2.0 adds a platform-neutral audio command layer. Games can build a bounded AudioFrame containing play, stop-all, and master-volume commands. An AudioBackend consumes those commands, while NullAudio provides a deterministic backend for tests.
+
+The runtime owns the audio frame and submits it once per running frame. Audio backend memory is included in the runtime memory accounting boundary, allowing a future Android audio backend to be added without making game code depend directly on Android audio APIs.
+
+The current layer does not decode compressed audio or produce physical sound yet. It establishes the game-facing audio contract before adding an Android backend.
 
 ### Game-control bytecode
 
