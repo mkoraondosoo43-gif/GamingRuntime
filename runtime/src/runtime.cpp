@@ -201,6 +201,17 @@ bool Runtime::load_bytecode_module(const std::string& bytecode_path) {
         return false;
     }
 
+    std::error_code error;
+    const std::filesystem::path root(game_.root_directory);
+    const std::filesystem::path bytecode(bytecode_path);
+    const auto relative = std::filesystem::relative(
+        root.lexically_normal(), bytecode.lexically_normal(), error);
+    if (error || relative.generic_string() == ".." ||
+        relative.generic_string().rfind("../", 0) == 0 ||
+        !std::filesystem::is_regular_file(bytecode, error) || error) {
+        return false;
+    }
+
     auto module = std::make_unique<BytecodeGameModule>(bytecode_path);
     game_module_ = std::move(module);
     return true;
