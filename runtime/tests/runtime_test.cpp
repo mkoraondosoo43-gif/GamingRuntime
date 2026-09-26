@@ -225,9 +225,17 @@ int main() {
 
     runtime.tick(1.0 / 60.0);
     assert(runtime.frame_state().frame_number == 1);
+    assert(runtime.frame_state().delta_seconds > 0.0);
+    assert(runtime.frame_state().frame_budget_seconds > 0.0);
+    assert(!runtime.frame_state().frame_over_budget);
+    assert(runtime.frame_state().frame_budget_seconds == runtime.frame_scheduler().frame_budget_seconds());
+
+    runtime.tick(1.0 / 30.0);
+    assert(runtime.frame_state().frame_number == 2);
+    assert(runtime.frame_state().frame_over_budget);
     assert(renderer_ptr->submitted_frames() == 1);
     assert(renderer_ptr->last_command_count() == 2);
-    assert(module_ptr->last_frame == 1);
+    assert(module_ptr->last_frame == 2);
     assert(module_ptr->last_delta > 0.0);
 
     runtime.stop_game();
