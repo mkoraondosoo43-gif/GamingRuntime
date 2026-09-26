@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Android Framebuffer Presentation v2.2
+## Current milestone: Android Input Bridge v2.3
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -50,6 +50,12 @@ v2.1 adds a platform-neutral display lifecycle boundary. A `DisplayBackend` owns
 The runtime includes display backend memory in its resource accounting and treats display attachment transactionally, like renderer and audio attachment. This is the contract that a future Android window/surface backend can implement without exposing Android APIs to game code.
 
 The Android backend does not create the Android window itself; the host application supplies the `ANativeWindow`. The runtime now has an end-to-end software-renderer framebuffer-to-Android-surface presentation path.
+
+### Android input bridge
+
+v2.3 adds an Android NDK input bridge. `AndroidInputBridge` translates mapped Android key events into runtime buttons and Android motion events into runtime pointer/touch state and mapped analog axes. Game code remains platform-neutral: Android input is converted into the existing `InputManager` boundary before `GameModule::update()` receives its read-only input snapshot.
+
+Key and axis mappings are explicit rather than hard-coded to game controls. The bridge does not create UI controls or impose a game-specific layout; the Android host chooses the mappings.
 
 ### Runtime audio boundary
 
