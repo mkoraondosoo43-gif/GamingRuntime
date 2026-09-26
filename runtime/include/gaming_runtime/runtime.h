@@ -6,6 +6,7 @@
 
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/game_module.h"
+#include "gaming_runtime/input.h"
 #include "gaming_runtime/render.h"
 
 namespace gaming_runtime {
@@ -64,6 +65,11 @@ public:
                             std::uint32_t width,
                             std::uint32_t height);
 
+    void set_input_button(std::size_t button, bool down);
+    void set_input_axis(std::size_t axis, float value);
+    void set_pointer_input(float x, float y, bool down);
+    const InputState& input_state() const noexcept;
+
 private:
     RuntimeConfig config_;
     GamePackage game_;
@@ -71,6 +77,7 @@ private:
     std::unique_ptr<GameModule> game_module_;
     AssetManager asset_manager_;
     RenderFrame render_frame_;
+    InputManager input_manager_;
     std::unique_ptr<Renderer> renderer_;
     bool renderer_started_ = false;
     bool game_loaded_ = false;
