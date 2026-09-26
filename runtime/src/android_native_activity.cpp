@@ -263,6 +263,11 @@ void native_window_created(ANativeActivity* activity, ANativeWindow* window) {
         return;
     }
     log_message("runtime started");
+
+    if (!state->frame_thread.joinable()) {
+        state->running.store(true, std::memory_order_release);
+        state->frame_thread = std::thread(frame_loop, state);
+    }
 }
 
 void native_window_resized(ANativeActivity* activity, ANativeWindow* window) {
@@ -379,8 +384,10 @@ extern "C" void ANativeActivity_onCreate(
         return;
     }
 
-    state->runtime.attach_game_module(
-        std::make_unique<AndroidDemoGame>());
-
-    state->frame_thread = std::thread(frame_loop, state);
+    if (!state->runtime.attach_game_module(
+            std::make_unique<AndroidDemoGame>())) {
+        state->running.store(false, std::memory_order_release);
+        log_message("demo game attach FAILED");
+        return;
+    }
 }
