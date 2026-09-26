@@ -94,6 +94,10 @@ std::uint64_t NullRenderer::memory_bytes() const noexcept {
     return 0;
 }
 
+FramebufferView NullRenderer::framebuffer() const noexcept {
+    return {};
+}
+
 void NullRenderer::shutdown() {
     initialized_ = false;
 }
@@ -187,6 +191,20 @@ bool SoftwareRenderer::unregister_texture(std::uint32_t resource_id) {
 
 std::uint64_t SoftwareRenderer::memory_bytes() const noexcept {
     return static_cast<std::uint64_t>(pixels_.size());
+}
+
+FramebufferView SoftwareRenderer::framebuffer() const noexcept {
+    if (!initialized_ || pixels_.empty()) {
+        return {};
+    }
+
+    return {
+        pixels_.data(),
+        width_,
+        height_,
+        width_ * 4U,
+        pixels_.size()
+    };
 }
 
 bool SoftwareRenderer::has_texture(std::uint32_t resource_id) const noexcept {
