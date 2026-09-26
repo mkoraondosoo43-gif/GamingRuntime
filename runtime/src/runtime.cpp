@@ -2,10 +2,6 @@
 #include "gaming_runtime/bytecode.h"
 #include "gaming_runtime/storage.h"
 
-#if defined(__ANDROID__)
-#include <android/log.h>
-#endif
-
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -15,15 +11,6 @@
 
 namespace gaming_runtime {
 namespace {
-
-#if defined(__ANDROID__)
-constexpr char kRuntimeLogTag[] = "GamingRuntime";
-void runtime_log(const char* message) {
-    __android_log_print(ANDROID_LOG_INFO, kRuntimeLogTag, "%s", message);
-}
-#else
-void runtime_log(const char*) {}
-#endif
 
 std::string read_file(const std::string& path) {
     std::ifstream file(path);
@@ -38,7 +25,7 @@ std::string read_file(const std::string& path) {
 
 std::string json_string(const std::string& text, const std::string& key) {
     const std::regex pattern(
-        "\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
+        """ + key + ""\s*:\s*"([^"]*)"");
 
     std::smatch match;
     if (!std::regex_search(text, match, pattern)) {
@@ -50,7 +37,7 @@ std::string json_string(const std::string& text, const std::string& key) {
 
 std::uint64_t json_uint64(const std::string& text, const std::string& key) {
     const std::regex pattern(
-        "\"" + key + "\"\\s*:\\s*([0-9]+)");
+        """ + key + ""\s*:\s*([0-9]+)");
 
     std::smatch match;
     if (!std::regex_search(text, match, pattern)) {
@@ -233,11 +220,7 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
     package.bytecode_path = bytecode_path.string();
     package.estimated_memory_mb = json_uint64(manifest, "estimated_memory_mb");
 
-    if (!load_game(package)) {
-        return false;
-    }
-
-    return load_bytecode_module(package.bytecode_path);
+    return load_game(package) && load_bytecode_module(package.bytecode_path);
 }
 
 bool Runtime::load_game_from_storage(
@@ -371,46 +354,22 @@ void Runtime::tick(double delta_seconds) {
         context.audio = &audio_frame_;
         game_module_->update(context);
 
-        bool rendered = false;
         if (renderer_ && renderer_started_) {
-            rendered = renderer_->submit(render_frame_);
-        }
-
-        if (frame_.frame_number == 1) {
-            runtime_log(renderer_ && renderer_started_
-                ? (rendered ? "FIRST FRAME: renderer submit OK" : "FIRST FRAME: renderer submit FAILED")
-                : "FIRST FRAME: renderer unavailable");
+            renderer_->submit(render_frame_);
         }
 
         if (audio_ && audio_started_) {
             audio_->submit(audio_frame_);
         }
 
-        if (display_ && display_started_ && rendered) {
+        if (display_ && display_started_ && renderer_ && renderer_started_) {
             const FramebufferView framebuffer = renderer_->framebuffer();
-            const bool valid = framebuffer.valid() &&
+            if (framebuffer.valid() &&
                 framebuffer.width == display_->width() &&
-                framebuffer.height == display_->height();
-
-            if (frame_.frame_number == 1) {
-                runtime_log(valid
-                    ? "FIRST FRAME: framebuffer valid"
-                    : "FIRST FRAME: framebuffer INVALID/MISMATCH");
+                framebuffer.height == display_->height()) {
+                display_->present(framebuffer);
             }
-
-            if (valid) {
-                const bool presented = display_->present(framebuffer);
-                if (frame_.frame_number == 1) {
-                    runtime_log(presented
-                        ? "FIRST FRAME: display present OK"
-                        : "FIRST FRAME: display present FAILED");
-                }
-            }
-        } else if (frame_.frame_number == 1) {
-            runtime_log("FIRST FRAME: display path unavailable");
         }
-    } else if (frame_.frame_number == 1) {
-        runtime_log("FIRST FRAME: game not started");
     }
 }
 
@@ -580,7 +539,97 @@ bool Runtime::resize_display(std::uint32_t width, std::uint32_t height) {
         return false;
     }
 
-    return display_->resize(width, height);
+    const std::uint32_t old_width = display_->width();
+    const std::uint32_t old_height = display_->height();
+    const std::uint64_t old_renderer_bytes =
+        renderer_started_ ? renderer_memory_bytes_ : 0;
+
+    if (renderer_ && renderer_started_) {
+        const FramebufferView old_framebuffer = renderer_->framebuffer();
+        if (old_framebuffer.valid()) {
+            const std::uint64_t max_pixels = 16ULL * 1024ULL * 1024ULL;
+            const std::uint64_t pixels =
+                static_cast<std::uint64_t>(width) * height;
+            if (pixels > max_pixels || pixels == 0 ||
+                pixels > UINT64_MAX / 4ULL) {
+                return false;
+            }
+
+            const std::uint64_t new_renderer_bytes = pixels * 4ULL;
+            if (new_renderer_bytes > old_renderer_bytes) {
+                const std::uint64_t delta =
+                    new_renderer_bytes - old_renderer_bytes;
+                if (delta > memory_manager_.available_bytes()) {
+                    return false;
+                }
+            }
+
+            if (!renderer_->resize(width, height)) {
+                return false;
+            }
+
+            if (new_renderer_bytes > old_renderer_bytes) {
+                if (!memory_manager_.reserve(
+                        new_renderer_bytes - old_renderer_bytes)) {
+                    renderer_->resize(old_width, old_height);
+                    return false;
+                }
+            } else if (new_renderer_bytes < old_renderer_bytes) {
+                memory_manager_.release(
+                    old_renderer_bytes - new_renderer_bytes);
+            }
+
+            renderer_memory_bytes_ = new_renderer_bytes;
+        }
+    }
+
+    if (!display_->resize(width, height)) {
+        if (renderer_ && renderer_started_) {
+            const std::uint64_t current_renderer_bytes = renderer_memory_bytes_;
+            if (renderer_->resize(old_width, old_height)) {
+                if (current_renderer_bytes > old_renderer_bytes) {
+                    memory_manager_.release(
+                        current_renderer_bytes - old_renderer_bytes);
+                } else if (old_renderer_bytes > current_renderer_bytes) {
+                    memory_manager_.reserve(
+                        old_renderer_bytes - current_renderer_bytes);
+                }
+                renderer_memory_bytes_ = old_renderer_bytes;
+            }
+        }
+        return false;
+    }
+
+    const std::uint64_t old_display_bytes = display_memory_bytes_;
+    const std::uint64_t new_display_bytes = display_->memory_bytes();
+    if (new_display_bytes > old_display_bytes) {
+        const std::uint64_t delta = new_display_bytes - old_display_bytes;
+        if (delta > memory_manager_.available_bytes()) {
+            display_->resize(old_width, old_height);
+            if (renderer_ && renderer_started_) {
+                const std::uint64_t current_renderer_bytes = renderer_memory_bytes_;
+                if (renderer_->resize(old_width, old_height)) {
+                    if (current_renderer_bytes > old_renderer_bytes) {
+                        memory_manager_.release(
+                            current_renderer_bytes - old_renderer_bytes);
+                    } else if (old_renderer_bytes > current_renderer_bytes) {
+                        memory_manager_.reserve(
+                            old_renderer_bytes - current_renderer_bytes);
+                    }
+                    renderer_memory_bytes_ = old_renderer_bytes;
+                }
+            }
+            return false;
+        }
+    }
+
+    if (new_display_bytes > old_display_bytes) {
+        memory_manager_.reserve(new_display_bytes - old_display_bytes);
+    } else if (new_display_bytes < old_display_bytes) {
+        memory_manager_.release(old_display_bytes - new_display_bytes);
+    }
+    display_memory_bytes_ = new_display_bytes;
+    return true;
 }
 
 void Runtime::detach_display() noexcept {
