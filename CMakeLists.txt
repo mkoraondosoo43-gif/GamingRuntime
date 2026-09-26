@@ -10,6 +10,7 @@ add_library(gaming_runtime
     runtime/src/runtime.cpp
     runtime/src/storage.cpp
     runtime/src/bytecode.cpp
+    runtime/src/asset_manager.cpp
 )
 
 target_include_directories(gaming_runtime
