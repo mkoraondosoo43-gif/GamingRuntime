@@ -175,6 +175,26 @@ int main() {
     assert(module_ptr->shutdown_called);
 
     {
+        auto software = std::make_unique<gaming_runtime::SoftwareRenderer>();
+        auto* software_ptr = software.get();
+        assert(runtime.attach_renderer(std::move(software), 8, 8));
+        assert(runtime.load_texture_asset(12, "textures/checker.rgba", 2, 2));
+        assert(software_ptr->has_texture(12));
+
+        assert(runtime.render_frame().clear({0.0f, 0.0f, 0.0f, 1.0f}));
+        assert(runtime.render_frame().draw_quad(0.0f, 0.0f, 4.0f, 4.0f, 12));
+        assert(software_ptr->submit(runtime.render_frame()));
+
+        const auto& pixels = software_ptr->pixels();
+        assert(pixels[0] == 255);
+        assert(pixels[1] == 0);
+        assert(pixels[2] == 0);
+        assert(pixels[4 * 4] == 0);
+        assert(pixels[4 * 4 + 1] == 255);
+        assert(pixels[4 * 4 + 2] == 0);
+    }
+
+    {
         gaming_runtime::SoftwareRenderer software;
         assert(software.initialize(32, 24));
         gaming_runtime::Texture texture{
