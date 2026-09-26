@@ -11,7 +11,7 @@ AudioFrame::AudioFrame(std::size_t max_commands)
 
 bool AudioFrame::play(std::uint32_t resource_id,
                       float volume,
-                      bool loop) noexcept {
+                      bool loop) {
     if (resource_id == 0 || commands_.size() >= max_commands_) {
         return false;
     }
@@ -25,7 +25,7 @@ bool AudioFrame::play(std::uint32_t resource_id,
     return true;
 }
 
-bool AudioFrame::stop_all() noexcept {
+bool AudioFrame::stop_all() {
     if (commands_.size() >= max_commands_) {
         return false;
     }
@@ -36,7 +36,7 @@ bool AudioFrame::stop_all() noexcept {
     return true;
 }
 
-bool AudioFrame::set_master_volume(float volume) noexcept {
+bool AudioFrame::set_master_volume(float volume) {
     if (commands_.size() >= max_commands_) {
         return false;
     }
