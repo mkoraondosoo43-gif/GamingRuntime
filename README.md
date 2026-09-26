@@ -2,33 +2,32 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Game Execution Boundary v0.6
+## Current milestone: Bytecode Execution Backend v0.7
 
-GamingRuntime now has its first real game-execution boundary.
+GamingRuntime now contains a real runtime-owned bytecode execution backend.
 
-The runtime can:
+The bytecode VM can:
 
-- validate and load a game package;
-- attach a runtime-owned `GameModule`;
-- initialize the module before execution;
-- provide frame number and delta time to the module;
-- execute the module once per runtime frame;
-- stop the module through an explicit shutdown lifecycle;
-- reject execution when the package is not locally runnable.
+- load a text-based runtime bytecode program;
+- execute stack operations;
+- perform integer add, subtract, and multiply operations;
+- write results into eight VM registers;
+- halt safely on invalid stack/register operations;
+- cap instructions executed per frame;
+- cap the VM stack size;
+- run through the existing GameModule lifecycle.
 
-### Package layout
+### Example runtime bytecode
 
-    GamingRuntime/
-    └── games/
-        └── demo_game/
-            ├── game.json
-            └── assets/
-                ├── textures/
-                ├── models/
-                ├── audio/
-                └── ...
+    PUSH 20
+    PUSH 22
+    ADD
+    SET 0
+    HALT
 
-### Execution flow
+This computes 42 and stores it in VM register 0.
+
+### Execution architecture
 
     Game Package
           |
@@ -38,36 +37,27 @@ The runtime can:
           |
     Runtime Core
           |
+    Game Execution Backend
+          |
+    Bytecode VM
+          |
     GameModule
-      initialize()
-          |
-      update(frame)
-          |
-      update(frame)
-          |
-       shutdown()
           |
     Platform / Hardware Bridge
 
-### Game module boundary
+The bytecode backend is intentionally small and portable. It is not being presented as a way to run arbitrary existing Windows, console, or Android executables. It establishes a genuine instruction-execution layer that GamingRuntime controls.
 
-`GameModule` is the controlled interface between GamingRuntime and actual game logic.
+A future backend can translate or execute other supported game-code formats while keeping the same GameModule boundary.
 
-It currently exposes:
+### Safety boundaries
 
-- `initialize()`
-- `update(GameFrameContext)`
-- `shutdown()`
+The VM currently limits:
 
-This is intentionally an execution boundary, not a fake claim that arbitrary Android, Windows, or console executables can already run.
+- instructions per frame: 64;
+- stack entries: 1024;
+- registers: 8.
 
-The next execution layer can plug a real game-code backend into this boundary, such as a sandboxed bytecode/WASM-style module or a native translated module.
-
-### Architecture
-
-Game Package -> Runtime Storage -> Package Validation -> Runtime Core -> Game Execution Backend -> Graphics/Audio/Input/Memory Systems -> Platform/Hardware Bridge
-
-Android remains the underlying hardware/platform layer while GamingRuntime owns the game execution pipeline.
+Invalid arithmetic stack usage or invalid register access halts the module instead of continuing with undefined state.
 
 ## Build
 
