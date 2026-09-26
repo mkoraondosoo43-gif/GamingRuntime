@@ -59,6 +59,10 @@ public:
     bool attach_renderer(std::unique_ptr<Renderer> renderer,
                          std::uint32_t width,
                          std::uint32_t height);
+    bool load_texture_asset(std::uint32_t resource_id,
+                            const std::string& relative_path,
+                            std::uint32_t width,
+                            std::uint32_t height);
 
 private:
     RuntimeConfig config_;
