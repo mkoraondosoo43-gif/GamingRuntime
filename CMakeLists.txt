@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(GamingRuntime VERSION 1.7.0 LANGUAGES CXX)
+project(GamingRuntime VERSION 1.8.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
