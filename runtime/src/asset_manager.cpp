@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <utility>
 
 namespace gaming_runtime {
@@ -20,7 +21,14 @@ bool AssetManager::set_root(std::string assets_root) {
         return false;
     }
 
-    assets_root_ = root.string();
+    const std::filesystem::path canonical_root =
+        std::filesystem::weakly_canonical(root, error);
+    if (error || !std::filesystem::is_directory(canonical_root, error) || error) {
+        assets_root_.clear();
+        return false;
+    }
+
+    assets_root_ = canonical_root.string();
     return true;
 }
 
@@ -35,8 +43,20 @@ bool AssetManager::resolve_asset(const std::string& relative_path,
         (root / relative_path).lexically_normal();
 
     std::error_code error;
+    const std::filesystem::path canonical_root =
+        std::filesystem::weakly_canonical(root, error);
+    if (error) {
+        return false;
+    }
+
+    const std::filesystem::path canonical_candidate =
+        std::filesystem::weakly_canonical(candidate, error);
+    if (error) {
+        return false;
+    }
+
     const auto relative = std::filesystem::relative(
-        root, candidate, error);
+        canonical_root, canonical_candidate, error);
     if (error) {
         return false;
     }
@@ -46,7 +66,7 @@ bool AssetManager::resolve_asset(const std::string& relative_path,
         return false;
     }
 
-    resolved_path = candidate.string();
+    resolved_path = canonical_candidate.string();
     return true;
 }
 
@@ -76,7 +96,9 @@ bool AssetManager::read_asset(const std::string& relative_path,
     }
 
     const auto size = std::filesystem::file_size(resolved, error);
-    if (error || size > max_bytes) {
+    if (error || size > max_bytes ||
+        size > static_cast<std::uintmax_t>(
+                    std::numeric_limits<std::size_t>::max())) {
         return false;
     }
 
