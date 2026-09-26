@@ -36,6 +36,15 @@ The bytecode VM can:
 
 ### Runtime display boundary
 
+### Android surface bridge
+
+v2.1 also adds an Android NDK AndroidSurfaceDisplay backend. It owns an ANativeWindow reference, configures an RGBA8888 buffer surface, supports resize, and presents through the Android native window API. The Android implementation is compiled only for Android builds and is linked against the NDK android library.
+
+The core runtime continues to depend only on DisplayBackend; Android-specific window types stay in the platform backend.
+
+The current Android backend establishes the real surface lifecycle and presentation path. It does not yet copy the runtime software-renderer framebuffer into the Android surface; that is a separate rendering integration step.
+
+
 v2.1 adds a platform-neutral display lifecycle boundary. A `DisplayBackend` owns a logical display surface, supports initialization and resize, and receives one presentation event per running runtime frame. `NullDisplay` provides a deterministic backend for tests.
 
 The runtime includes display backend memory in its resource accounting and treats display attachment transactionally, like renderer and audio attachment. This is the contract that a future Android window/surface backend can implement without exposing Android APIs to game code.
