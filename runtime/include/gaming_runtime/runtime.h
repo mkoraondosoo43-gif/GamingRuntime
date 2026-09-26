@@ -6,6 +6,7 @@
 
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/game_module.h"
+#include "gaming_runtime/render.h"
 
 namespace gaming_runtime {
 
@@ -53,6 +54,11 @@ public:
     const GamePackage& loaded_game() const noexcept;
     bool game_started() const noexcept;
     const AssetManager& assets() const noexcept;
+    RenderFrame& render_frame() noexcept;
+    const RenderFrame& render_frame() const noexcept;
+    bool attach_renderer(std::unique_ptr<Renderer> renderer,
+                         std::uint32_t width,
+                         std::uint32_t height);
 
 private:
     RuntimeConfig config_;
@@ -60,6 +66,9 @@ private:
     FrameState frame_;
     std::unique_ptr<GameModule> game_module_;
     AssetManager asset_manager_;
+    RenderFrame render_frame_;
+    std::unique_ptr<Renderer> renderer_;
+    bool renderer_started_ = false;
     bool game_loaded_ = false;
     bool game_started_ = false;
 };
