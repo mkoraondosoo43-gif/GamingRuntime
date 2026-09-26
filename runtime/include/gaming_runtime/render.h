@@ -63,6 +63,7 @@ public:
     virtual bool initialize(std::uint32_t width, std::uint32_t height) = 0;
     virtual bool submit(const RenderFrame& frame) = 0;
     virtual bool upload_texture(std::uint32_t resource_id, const Texture& texture) = 0;
+    virtual bool unregister_texture(std::uint32_t resource_id) = 0;
     virtual void shutdown() = 0;
 };
 
@@ -71,6 +72,7 @@ public:
     bool initialize(std::uint32_t width, std::uint32_t height) override;
     bool submit(const RenderFrame& frame) override;
     bool upload_texture(std::uint32_t resource_id, const Texture& texture) override;
+    bool unregister_texture(std::uint32_t resource_id) override;
     void shutdown() override;
 
     std::uint64_t submitted_frames() const noexcept;
