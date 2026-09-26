@@ -178,6 +178,43 @@ void stop_input_thread(HostState* state) {
     state->input_looper = nullptr;
 }
 
+void paint_surface_probe(ANativeWindow* window) {
+    if (!window) {
+        return;
+    }
+
+    const int width = ANativeWindow_getWidth(window);
+    const int height = ANativeWindow_getHeight(window);
+    if (width <= 0 || height <= 0) {
+        return;
+    }
+
+    if (ANativeWindow_setBuffersGeometry(
+            window, width, height, WINDOW_FORMAT_RGBA_8888) != 0) {
+        return;
+    }
+
+    ANativeWindow_Buffer buffer{};
+    ARect dirty{0, 0, width, height};
+    if (ANativeWindow_lock(window, &buffer, &dirty) != 0) {
+        return;
+    }
+
+    if (buffer.bits && buffer.width >= width && buffer.height >= height &&
+        buffer.stride >= width) {
+        auto* pixels = static_cast<std::uint32_t*>(buffer.bits);
+        const std::size_t stride = static_cast<std::size_t>(buffer.stride);
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                pixels[static_cast<std::size_t>(y) * stride +
+                       static_cast<std::size_t>(x)] = 0xFF00FFFFU;
+            }
+        }
+    }
+
+    ANativeWindow_unlockAndPost(window);
+}
+
 void native_window_created(ANativeActivity* activity, ANativeWindow* window) {
     auto* state = static_cast<HostState*>(activity->instance);
     if (!state || !window) {
@@ -185,6 +222,10 @@ void native_window_created(ANativeActivity* activity, ANativeWindow* window) {
     }
 
     std::lock_guard<std::mutex> lock(state->mutex);
+
+    // Visible surface probe: proves that NativeActivity reached the real
+    // ANativeWindow before the runtime renderer is started.
+    paint_surface_probe(window);
 
     if (!state->host.attach_surface(window)) {
         return;
