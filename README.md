@@ -2,38 +2,32 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Core v0.2
+## Current milestone: Runtime Core v0.3
 
-The runtime can now load a game manifest from disk, validate the required package fields, create a runtime game session, and run the deterministic frame tick.
+GamingRuntime now has its own logical game library layer.
 
-### Manifest
+The storage system can:
 
-A game package currently describes:
+- initialize a runtime-owned game library directory;
+- recognize game directories containing `game.json`;
+- discover installed games;
+- return each game's directory and manifest path.
 
-- `id`
-- `name`
-- `version`
-- `entry_point`
-- `estimated_memory_mb`
+### Game library layout
 
-Example:
-
-```json
-{
-  "id": "demo.game",
-  "name": "Runtime Demo",
-  "version": "0.2.0",
-  "entry_point": "main",
-  "estimated_memory_mb": 128
-}
+```text
+GamingRuntime/
+└── games/
+    └── demo_game/
+        └── game.json
 ```
 
-## Architecture
+### Architecture
 
-Game package -> Manifest -> Runtime Core -> Platform/Hardware Bridge
+Game Package -> Runtime Storage -> Manifest -> Runtime Core -> Platform/Hardware Bridge
 
 Android remains the underlying hardware/platform layer while GamingRuntime owns the game execution pipeline.
 
 ## Build
 
-The initial core is written in portable C++17 so it can later be integrated into an Android NDK/AOSP-based system.
+The core is portable C++17 and can later be integrated into an Android NDK/AOSP-based system.
