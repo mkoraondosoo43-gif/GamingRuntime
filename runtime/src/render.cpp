@@ -148,7 +148,11 @@ void SoftwareRenderer::shutdown() {
 }
 
 bool SoftwareRenderer::register_texture(std::uint32_t resource_id, Texture texture) {
-    if (!initialized_ || resource_id == 0 || !texture.valid()) {
+    constexpr std::uint64_t max_pixels = 16ULL * 1024ULL * 1024ULL;
+    const std::uint64_t pixel_count =
+        static_cast<std::uint64_t>(texture.width) * texture.height;
+    if (!initialized_ || resource_id == 0 || pixel_count == 0 ||
+        pixel_count > max_pixels || !texture.valid()) {
         return false;
     }
 
