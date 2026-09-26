@@ -247,3 +247,6 @@ Invalid arithmetic stack usage or invalid register access halts the module inste
 ## Build
 
 The core is portable C++17 and can later be integrated into an Android NDK/AOSP-based system. The renderer boundary is designed so platform graphics backends can be added separately.
+
+
+CI verification note: v2.2 is validated by both host and Android ARM64 build jobs.
