@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Renderer Memory Budget v1.8
+## Current milestone: Frame Budget Scheduler v1.9
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -111,6 +111,9 @@ A future Android input bridge can translate touch, gamepad, keyboard, or other p
 GamingRuntime now includes a deterministic CPU-based `SoftwareRenderer`. It consumes the same runtime render commands and produces an RGBA8 framebuffer. This makes the rendering path executable and testable without depending on Android, Vulkan, OpenGL ES, or a physical GPU.
 
 The software backend now rasterizes clear, rectangle, and registered RGBA8 texture resources. It remains a development and compatibility foundation rather than the final hardware-accelerated Android backend.
+
+The runtime now has a frame-budget scheduler. `RuntimeConfig::target_fps` defines the target frame budget, `Runtime::tick()` uses the scheduler to sanitize incoming delta time, and `FrameState` reports whether the supplied frame time exceeded the target budget. This is timing and telemetry groundwork; it does not sleep, overclock hardware, or create performance that the device does not have.
+
 
 Framebuffer allocation is capped at 16 million pixels to keep accidental allocations bounded.
 
