@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <vector>
 
@@ -23,33 +22,161 @@ std::string read_file(const std::string& path) {
     return buffer.str();
 }
 
-std::string json_string(const std::string& text, const std::string& key) {
-    const std::regex pattern(
-        "\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
+class JsonParser {
+public:
+    explicit JsonParser(const std::string& text) : text_(text) {}
 
-    std::smatch match;
-    if (!std::regex_search(text, match, pattern)) {
-        return {};
+    bool parse_object(std::unordered_map<std::string, std::string>& strings,
+                      std::unordered_map<std::string, std::uint64_t>& numbers) {
+        skip_ws();
+        if (!consume('{')) return false;
+        skip_ws();
+        if (consume('}')) return true;
+
+        while (pos_ < text_.size()) {
+            std::string key;
+            if (!parse_string(key)) return false;
+            skip_ws();
+            if (!consume(':')) return false;
+            skip_ws();
+
+            if (peek() == '"') {
+                std::string value;
+                if (!parse_string(value)) return false;
+                if (!strings.emplace(key, std::move(value)).second) return false;
+            } else {
+                std::uint64_t value = 0;
+                if (!parse_uint(value)) return false;
+                if (!numbers.emplace(key, value).second) return false;
+            }
+
+            skip_ws();
+            if (consume('}')) {
+                skip_ws();
+                return pos_ == text_.size();
+            }
+            if (!consume(',')) return false;
+            skip_ws();
+        }
+        return false;
     }
 
-    return match[1].str();
+private:
+    char peek() const noexcept {
+        return pos_ < text_.size() ? text_[pos_] : '\0';
+    }
+
+    void skip_ws() noexcept {
+        while (pos_ < text_.size()) {
+            const char ch = text_[pos_];
+            if (ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n') break;
+            ++pos_;
+        }
+    }
+
+    bool consume(char expected) noexcept {
+        if (peek() != expected) return false;
+        ++pos_;
+        return true;
+    }
+
+    static bool hex_digit(char ch, unsigned& value) noexcept {
+        if (ch >= '0' && ch <= '9') { value = static_cast<unsigned>(ch - '0'); return true; }
+        if (ch >= 'a' && ch <= 'f') { value = static_cast<unsigned>(ch - 'a' + 10); return true; }
+        if (ch >= 'A' && ch <= 'F') { value = static_cast<unsigned>(ch - 'A' + 10); return true; }
+        return false;
+    }
+
+    bool parse_string(std::string& out) {
+        if (!consume('"')) return false;
+        out.clear();
+
+        while (pos_ < text_.size()) {
+            const unsigned char ch = static_cast<unsigned char>(text_[pos_++]);
+            if (ch == '"') return true;
+            if (ch < 0x20U) return false;
+
+            if (ch != '\\') {
+                out.push_back(static_cast<char>(ch));
+                continue;
+            }
+
+            if (pos_ >= text_.size()) return false;
+            const char escaped = text_[pos_++];
+            switch (escaped) {
+            case '"': out.push_back('"'); break;
+            case '\\': out.push_back('\\'); break;
+            case '/': out.push_back('/'); break;
+            case 'b': out.push_back('\b'); break;
+            case 'f': out.push_back('\f'); break;
+            case 'n': out.push_back('\n'); break;
+            case 'r': out.push_back('\r'); break;
+            case 't': out.push_back('\t'); break;
+            case 'u': {
+                unsigned codepoint = 0;
+                for (int i = 0; i < 4; ++i) {
+                    unsigned digit = 0;
+                    if (pos_ >= text_.size() || !hex_digit(text_[pos_++], digit)) return false;
+                    codepoint = (codepoint << 4U) | digit;
+                }
+                if (codepoint <= 0x7FU) {
+                    out.push_back(static_cast<char>(codepoint));
+                } else if (codepoint <= 0x7FFU) {
+                    out.push_back(static_cast<char>(0xC0U | (codepoint >> 6U)));
+                    out.push_back(static_cast<char>(0x80U | (codepoint & 0x3FU)));
+                } else {
+                    out.push_back(static_cast<char>(0xE0U | (codepoint >> 12U)));
+                    out.push_back(static_cast<char>(0x80U | ((codepoint >> 6U) & 0x3FU)));
+                    out.push_back(static_cast<char>(0x80U | (codepoint & 0x3FU)));
+                }
+                break;
+            }
+            default:
+                return false;
+            }
+        }
+        return false;
+    }
+
+    bool parse_uint(std::uint64_t& out) {
+        if (peek() < '0' || peek() > '9') return false;
+        if (peek() == '0') {
+            ++pos_;
+            if (peek() >= '0' && peek() <= '9') return false;
+            out = 0;
+            return true;
+        }
+
+        std::uint64_t value = 0;
+        while (peek() >= '0' && peek() <= '9') {
+            const unsigned digit = static_cast<unsigned>(text_[pos_] - '0');
+            if (value > (UINT64_MAX - digit) / 10ULL) return false;
+            value = value * 10ULL + digit;
+            ++pos_;
+        }
+        out = value;
+        return true;
+    }
+
+    const std::string& text_;
+    std::size_t pos_ = 0;
+};
+
+bool parse_manifest_json(
+    const std::string& text,
+    std::unordered_map<std::string, std::string>& strings,
+    std::unordered_map<std::string, std::uint64_t>& numbers) {
+    JsonParser parser(text);
+    return parser.parse_object(strings, numbers);
 }
 
-std::uint64_t json_uint64(const std::string& text, const std::string& key) {
-    const std::regex pattern(
-        "\"" + key + "\"\\s*:\\s*([0-9]+)");
-
-    std::smatch match;
-    if (!std::regex_search(text, match, pattern)) {
-        return 0;
-    }
-
-    try {
-        return std::stoull(match[1].str());
-    } catch (...) {
-        return 0;
-    }
+bool manifest_string(
+    const std::unordered_map<std::string, std::string>& strings,
+    const std::string& key) {
+    return strings.find(key) != strings.end();
 }
+
+
 
 } // namespace
 
@@ -162,63 +289,79 @@ bool Runtime::load_game(const GamePackage& package) {
 
 bool Runtime::load_manifest(const std::string& manifest_path) {
     const std::string manifest = read_file(manifest_path);
-    if (manifest.empty()) {
-        return false;
-    }
+    if (manifest.empty()) return false;
+
+    std::unordered_map<std::string, std::string> strings;
+    std::unordered_map<std::string, std::uint64_t> numbers;
+    if (!parse_manifest_json(manifest, strings, numbers)) return false;
+
+    const auto get_string = [&](const char* key) -> std::string {
+        const auto it = strings.find(key);
+        return it == strings.end() ? std::string{} : it->second;
+    };
+    const auto get_number = [&](const char* key) -> std::uint64_t {
+        const auto it = numbers.find(key);
+        return it == numbers.end() ? 0ULL : it->second;
+    };
 
     const std::filesystem::path manifest_file(manifest_path);
-    const std::filesystem::path package_root = manifest_file.parent_path();
-    const std::string assets_relative = json_string(manifest, "assets");
-    const std::string bytecode_relative = json_string(manifest, "bytecode");
+    const std::filesystem::path package_root =
+        std::filesystem::weakly_canonical(manifest_file.parent_path());
+    if (package_root.empty()) return false;
 
-    if (assets_relative.empty() || bytecode_relative.empty()) {
+    const std::string assets_relative = get_string("assets");
+    const std::string bytecode_relative = get_string("bytecode");
+    const std::string id = get_string("id");
+    const std::string name = get_string("name");
+    const std::string version = get_string("version");
+    const std::string entry_point = get_string("entry_point");
+    if (assets_relative.empty() || bytecode_relative.empty() ||
+        id.empty() || name.empty() || version.empty() || entry_point.empty() ||
+        numbers.find("format_version") == numbers.end() ||
+        numbers.find("estimated_memory_mb") == numbers.end()) {
         return false;
     }
 
-    const std::filesystem::path assets_path =
-        (package_root / assets_relative).lexically_normal();
+    const auto assets_path = (package_root / assets_relative).lexically_normal();
+    const auto bytecode_path = (package_root / bytecode_relative).lexically_normal();
 
-    std::error_code path_error;
-    const std::filesystem::path relative_assets =
-        std::filesystem::relative(
-            package_root.lexically_normal(),
-            assets_path,
-            path_error);
+    auto inside_root = [&](const std::filesystem::path& candidate) {
+        std::error_code error;
+        const auto canonical = std::filesystem::weakly_canonical(candidate, error);
+        if (error) return false;
+        const auto relative = std::filesystem::relative(package_root, canonical, error);
+        if (error) return false;
+        const auto text = relative.generic_string();
+        return text != ".." && text.rfind("../", 0) != 0;
+    };
 
-    if (path_error) {
-        return false;
-    }
+    if (!inside_root(assets_path) || !inside_root(bytecode_path)) return false;
 
-    const std::string relative_text = relative_assets.generic_string();
-    if (relative_text == ".." ||
-        relative_text.rfind("../", 0) == 0) {
-        return false;
-    }
-
-    const std::filesystem::path bytecode_path =
-        (package_root / bytecode_relative).lexically_normal();
-    const auto relative_bytecode = std::filesystem::relative(
-        package_root.lexically_normal(), bytecode_path, path_error);
-    if (path_error) {
-        return false;
-    }
-    const std::string relative_bytecode_text = relative_bytecode.generic_string();
-    if (relative_bytecode_text == ".." ||
-        relative_bytecode_text.rfind("../", 0) == 0) {
-        return false;
-    }
+    std::error_code error;
+    if (!std::filesystem::is_directory(assets_path, error) || error) return false;
+    error.clear();
+    if (!std::filesystem::is_regular_file(bytecode_path, error) || error) return false;
 
     GamePackage package;
-    package.format_version = static_cast<std::uint32_t>(
-        json_uint64(manifest, "format_version"));
-    package.id = json_string(manifest, "id");
-    package.name = json_string(manifest, "name");
-    package.version = json_string(manifest, "version");
-    package.entry_point = json_string(manifest, "entry_point");
-    package.root_directory = package_root.lexically_normal().string();
-    package.assets_directory = assets_path.lexically_normal().string();
+    package.format_version = static_cast<std::uint32_t>(get_number("format_version"));
+    package.id = id;
+    package.name = name;
+    package.version = version;
+    package.entry_point = entry_point;
+    package.root_directory = package_root.string();
+    package.assets_directory = assets_path.string();
     package.bytecode_path = bytecode_path.string();
-    package.estimated_memory_mb = json_uint64(manifest, "estimated_memory_mb");
+    package.estimated_memory_mb = get_number("estimated_memory_mb");
+
+    if (package.format_version != config_.supported_package_format ||
+        package.estimated_memory_mb > config_.max_memory_mb) {
+        return false;
+    }
+
+    // Validate the bytecode before changing the currently loaded game.
+    BytecodeGameModule candidate(package.bytecode_path);
+    if (!candidate.initialize()) return false;
+    candidate.shutdown();
 
     return load_game(package) && load_bytecode_module(package.bytecode_path);
 }
