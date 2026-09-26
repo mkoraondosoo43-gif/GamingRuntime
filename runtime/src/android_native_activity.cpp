@@ -48,7 +48,6 @@ public:
             y - 0.08f,
             0.16f,
             0.16f,
-            {0.9f, 0.7f, 0.2f, 1.0f},
             0);
     }
 
@@ -126,9 +125,7 @@ void input_loop(HostState* state, AInputQueue* queue) {
         ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
     state->input_looper = looper;
 
-    if (AInputQueue_attachLooper(queue, looper, 1, nullptr, nullptr) != 0) {
-        return;
-    }
+    AInputQueue_attachLooper(queue, looper, 1, nullptr, nullptr);
 
     while (state->running.load(std::memory_order_acquire) &&
            state->input_queue == queue) {
@@ -314,7 +311,36 @@ extern "C" void ANativeActivity_onCreate(
     state->frame_thread = std::thread(frame_loop, state);
 }
 
-extern "C" ANativeActivity_onCreate(
-    ANativeActivity*,
-    void*,
-    size_t) __attribute__((alias("ANativeActivity_onCreate")));
+extern "C" void ANativeActivity_onCreate(
+    ANativeActivity* activity,
+    void* saved_state,
+    size_t saved_state_size) {
+    (void)saved_state;
+    (void)saved_state_size;
+
+    using namespace gaming_runtime;
+
+    auto* state = new HostState();
+    activity->instance = state;
+
+    activity->callbacks->onNativeWindowCreated = native_window_created;
+    activity->callbacks->onNativeWindowResized = native_window_resized;
+    activity->callbacks->onNativeWindowDestroyed = native_window_destroyed;
+    activity->callbacks->onInputQueueCreated = input_queue_created;
+    activity->callbacks->onInputQueueDestroyed = input_queue_destroyed;
+    activity->callbacks->onDestroy = on_destroy;
+
+    const std::string games_root =
+        std::string(activity->internalDataPath) + "/games";
+
+    if (!write_demo_package(games_root) ||
+        !state->runtime.load_game_from_storage("android.demo", games_root)) {
+        state->running.store(false, std::memory_order_release);
+        return;
+    }
+
+    state->runtime.attach_game_module(
+        std::make_unique<AndroidDemoGame>(state->runtime));
+
+    state->frame_thread = std::thread(frame_loop, state);
+}
