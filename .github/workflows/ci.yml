@@ -1,1 +1,51 @@
-name: Build and Test\n\non:\n  push:\n    branches: [main]\n  pull_request:\n    branches: [main]\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Configure\n        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release\n      - name: Build\n        run: cmake --build build --parallel\n      - name: Test\n        working-directory: build\n        run: ctest --output-on-failure\n\n  android-ndk-build:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Checkout\n        uses: actions/checkout@v4\n      - name: Set up Java\n        uses: actions/setup-java@v4\n        with:\n          distribution: temurin\n          java-version: "17"\n      - name: Set up Android SDK\n        uses: android-actions/setup-android@v3\n      - name: Install Android NDK\n        run: sdkmanager "ndk;27.2.12479018"\n      - name: Configure Android ARM64 build\n        run: >\n          cmake -S . -B build-android\n          -DCMAKE_BUILD_TYPE=Release\n          -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"\n          -DANDROID_ABI=arm64-v8a\n          -DANDROID_PLATFORM=android-24\n      - name: Build Android runtime\n        run: cmake --build build-android --parallel\n
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
+
+  android-ndk-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ""
+      - name: Install Android NDK
+        run: sdkmanager --install "ndk;27.2.12479018"
+      - name: Configure Android ARM64 build
+        run: >
+          cmake -S . -B build-android
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE="$ANDROID_SDK_ROOT/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          -DANDROID_ABI=arm64-v8a
+          -DANDROID_PLATFORM=android-24
+      - name: Build Android runtime
+        run: cmake --build build-android --parallel
