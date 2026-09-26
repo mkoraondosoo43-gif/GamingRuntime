@@ -2,6 +2,7 @@
 #include "gaming_runtime/bytecode.h"
 #include "gaming_runtime/asset_manager.h"
 #include "gaming_runtime/render.h"
+#include "gaming_runtime/audio.h"
 #include "gaming_runtime/memory.h"
 
 #include <cassert>
@@ -206,6 +207,12 @@ int main() {
     auto renderer = std::make_unique<gaming_runtime::NullRenderer>();
     auto* renderer_ptr = renderer.get();
     assert(runtime.attach_renderer(std::move(renderer), 1280, 720));
+
+    auto audio = std::make_unique<gaming_runtime::NullAudio>();
+    auto* audio_ptr = audio.get();
+    assert(runtime.attach_audio(std::move(audio), 48000, 2));
+    assert(audio_ptr->sample_rate() == 48000);
+    assert(audio_ptr->channels() == 2);
     assert(runtime.render_frame().size() == 0);
     assert(runtime.render_frame().clear({0.02f, 0.03f, 0.05f, 1.0f}));
     assert(runtime.render_frame().draw_quad(10.0f, 20.0f, 100.0f, 50.0f, 7));
@@ -213,7 +220,7 @@ int main() {
 
     class TestGame final : public gaming_runtime::GameModule {
     public:
-        explicit TestGame(gaming_runtime::RenderFrame& frame) : frame(frame) {}
+        TestGame(gaming_runtime::RenderFrame& frame, gaming_runtime::AudioFrame& audio) : frame(frame), audio(audio) {}
 
         bool initialize() override {
             initialized = true;
@@ -223,6 +230,7 @@ int main() {
         void update(const gaming_runtime::GameFrameContext& context) override {
             frame.clear({0.0f, 0.0f, 0.0f, 1.0f});
             frame.draw_quad(2.0f, 3.0f, 10.0f, 8.0f, 7);
+            audio.play(1, 0.75f, false);
             last_frame = context.frame_number;
             last_delta = context.delta_seconds;
             assert(context.input != nullptr);
@@ -238,9 +246,10 @@ int main() {
         std::uint64_t last_frame = 0;
         double last_delta = 0.0;
         gaming_runtime::RenderFrame& frame;
+        gaming_runtime::AudioFrame& audio;
     };
 
-    auto module = std::make_unique<TestGame>(runtime.render_frame());
+    auto module = std::make_unique<TestGame>(runtime.render_frame(), runtime.audio_frame());
     auto* module_ptr = module.get();
 
     assert(runtime.attach_game_module(std::move(module)));
@@ -260,6 +269,8 @@ int main() {
     assert(runtime.frame_state().frame_over_budget);
     assert(renderer_ptr->submitted_frames() == 2);
     assert(renderer_ptr->last_command_count() == 2);
+    assert(audio_ptr->submitted_frames() == 2);
+    assert(audio_ptr->last_command_count() == 1);
     assert(module_ptr->last_frame == 2);
     assert(module_ptr->last_delta > 0.0);
 
@@ -348,6 +359,20 @@ int main() {
         assert(!software.has_texture(9));
         software.shutdown();
         assert(software.pixels().empty());
+    }
+
+
+    {
+        gaming_runtime::AudioFrame frame(2);
+        assert(frame.play(1, 2.0f, true));
+        assert(frame.set_master_volume(-1.0f));
+        assert(!frame.stop_all());
+        assert(frame.size() == 2);
+        assert(frame.commands()[0].volume == 1.0f);
+        assert(frame.commands()[0].loop);
+        assert(frame.commands()[1].volume == 0.0f);
+        frame.reset();
+        assert(frame.size() == 0);
     }
 
     {
