@@ -335,4 +335,36 @@ bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
     return renderer_started_;
 }
 
+bool Runtime::load_texture_asset(std::uint32_t resource_id,
+                                 const std::string& relative_path,
+                                 std::uint32_t width,
+                                 std::uint32_t height) {
+    if (!game_loaded_ || !renderer_started_ || !renderer_ ||
+        resource_id == 0 || width == 0 || height == 0) {
+        return false;
+    }
+
+    constexpr std::uint64_t max_pixels = 16ULL * 1024ULL * 1024ULL;
+    const std::uint64_t pixel_count =
+        static_cast<std::uint64_t>(width) * height;
+    if (pixel_count > max_pixels || pixel_count > (UINT64_MAX / 4ULL)) {
+        return false;
+    }
+
+    const std::uint64_t expected_bytes = pixel_count * 4ULL;
+    std::vector<std::uint8_t> data;
+    if (!asset_manager_.read_asset(relative_path, data, expected_bytes) ||
+        data.size() != expected_bytes) {
+        return false;
+    }
+
+    Texture texture{
+        .width = width,
+        .height = height,
+        .pixels = std::move(data)
+    };
+
+    return renderer_->upload_texture(resource_id, texture);
+}
+
 } // namespace gaming_runtime
