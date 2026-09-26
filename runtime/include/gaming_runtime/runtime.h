@@ -83,6 +83,8 @@ public:
                         std::uint32_t width,
                         std::uint32_t height);
 
+    InputManager& input_manager() noexcept;
+    const InputManager& input_manager() const noexcept;
     void set_input_button(std::size_t button, bool down);
     void set_input_axis(std::size_t axis, float value);
     void set_pointer_input(float x, float y, bool down);
