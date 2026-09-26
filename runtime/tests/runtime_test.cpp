@@ -128,6 +128,33 @@ int main() {
     assert(!runtime.game_started());
     assert(module_ptr->shutdown_called);
 
+    {
+        const std::filesystem::path branch_program = game / "branch.bc";
+        {
+            std::ofstream program(branch_program);
+            program << "PUSH 7\n";
+            program << "SET 0\n";
+            program << "GET 0\n";
+            program << "PUSH 7\n";
+            program << "EQ\n";
+            program << "JZ 10\n";
+            program << "PUSH 42\n";
+            program << "SET 1\n";
+            program << "HALT\n";
+            program << "PUSH 99\n";
+            program << "SET 1\n";
+            program << "HALT\n";
+        }
+
+        gaming_runtime::BytecodeGameModule module(branch_program.string());
+        assert(module.initialize());
+        module.update({.frame_number = 1, .delta_seconds = 1.0 / 60.0});
+        assert(module.register_value(0) == 7);
+        assert(module.register_value(1) == 42);
+        assert(module.halted());
+        module.shutdown();
+    }
+
     assert(runtime.load_bytecode_module(bytecode.string()));
     assert(runtime.start_game());
     runtime.tick(1.0 / 60.0);
