@@ -63,11 +63,7 @@ int main() {
         program << "HALT\n";
     }
 
-    gaming_runtime::Runtime runtime({
-        .target_fps = 60,
-        .max_memory_mb = 512,
-        .supported_package_format = 1
-    });
+    gaming_runtime::Runtime runtime({60, 512, 1});
 
     assert(runtime.load_game_from_storage(
         "demo.game",
@@ -198,9 +194,9 @@ int main() {
         gaming_runtime::SoftwareRenderer software;
         assert(software.initialize(32, 24));
         gaming_runtime::Texture texture{
-            .width = 2,
-            .height = 2,
-            .pixels = {
+            2,
+            2,
+            {
                 255, 0, 0, 255,
                 0, 255, 0, 255,
                 0, 0, 255, 255,
@@ -248,7 +244,7 @@ int main() {
 
         gaming_runtime::BytecodeGameModule module(branch_program.string());
         assert(module.initialize());
-        module.update({.frame_number = 1, .delta_seconds = 1.0 / 60.0});
+        module.update({1, 1.0 / 60.0});
         assert(module.register_value(0) == 7);
         assert(module.register_value(1) == 42);
         assert(module.halted());
