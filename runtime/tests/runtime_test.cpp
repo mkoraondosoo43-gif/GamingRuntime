@@ -264,7 +264,7 @@ int main() {
 
         gaming_runtime::BytecodeGameModule module(memory_program.string());
         assert(module.initialize());
-        module.update({.frame_number = 1, .delta_seconds = 1.0 / 60.0});
+        module.update({1, 1.0 / 60.0});
         assert(module.memory_value(5) == 1234);
         assert(module.register_value(2) == 1234);
         module.shutdown();
