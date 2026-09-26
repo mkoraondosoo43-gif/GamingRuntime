@@ -2,7 +2,7 @@
 
 A standalone, local-first gaming runtime for Android.
 
-## Current milestone: Runtime Resource Memory v1.7
+## Current milestone: Renderer Memory Budget v1.8
 
 GamingRuntime now lets each game package declare its runtime-owned bytecode program in `game.json`.
 
@@ -73,6 +73,13 @@ v1.6 adds a bounded runtime memory accounting layer. Each loaded game reserves i
 
 The memory manager tracks budget, used bytes, and available bytes. It is an accounting/safety boundary, not virtual RAM: it cannot create physical memory that the device does not have.
 
+
+
+### Renderer memory budget
+
+v1.8 connects renderer framebuffer allocation to the runtime memory budget. A renderer reports its framebuffer memory footprint, and Runtime::attach_renderer() reserves that footprint before making the renderer active. If the budget cannot support the framebuffer, attachment fails without changing the active renderer or runtime accounting. Replacing a renderer releases the old framebuffer budget before reserving the new footprint.
+
+The built-in SoftwareRenderer reports its RGBA8 framebuffer size (width * height * 4) as its runtime memory footprint. This remains accounting of runtime-owned resources; it does not create or emulate physical RAM.
 
 ### Runtime resource memory
 
