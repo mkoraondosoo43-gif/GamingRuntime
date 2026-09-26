@@ -61,6 +61,7 @@ public:
 
     virtual bool initialize(std::uint32_t width, std::uint32_t height) = 0;
     virtual bool submit(const RenderFrame& frame) = 0;
+    virtual bool upload_texture(std::uint32_t resource_id, const Texture& texture) = 0;
     virtual void shutdown() = 0;
 };
 
@@ -68,6 +69,7 @@ class NullRenderer final : public Renderer {
 public:
     bool initialize(std::uint32_t width, std::uint32_t height) override;
     bool submit(const RenderFrame& frame) override;
+    bool upload_texture(std::uint32_t resource_id, const Texture& texture) override;
     void shutdown() override;
 
     std::uint64_t submitted_frames() const noexcept;
@@ -83,6 +85,7 @@ class SoftwareRenderer final : public Renderer {
 public:
     bool initialize(std::uint32_t width, std::uint32_t height) override;
     bool submit(const RenderFrame& frame) override;
+    bool upload_texture(std::uint32_t resource_id, const Texture& texture) override;
     void shutdown() override;
 
     bool register_texture(std::uint32_t resource_id, Texture texture);
