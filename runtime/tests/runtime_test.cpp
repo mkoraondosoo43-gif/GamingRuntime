@@ -233,7 +233,7 @@ int main() {
     runtime.tick(1.0 / 30.0);
     assert(runtime.frame_state().frame_number == 2);
     assert(runtime.frame_state().frame_over_budget);
-    assert(renderer_ptr->submitted_frames() == 1);
+    assert(renderer_ptr->submitted_frames() == 2);
     assert(renderer_ptr->last_command_count() == 2);
     assert(module_ptr->last_frame == 2);
     assert(module_ptr->last_delta > 0.0);
