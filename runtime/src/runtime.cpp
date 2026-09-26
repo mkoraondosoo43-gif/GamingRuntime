@@ -94,6 +94,10 @@ bool Runtime::load_game(const GamePackage& package) {
         return false;
     }
 
+    if (!asset_manager_.set_root(package.assets_directory)) {
+        return false;
+    }
+
     game_ = package;
     frame_ = {};
     game_started_ = false;
@@ -289,6 +293,10 @@ const GamePackage& Runtime::loaded_game() const noexcept {
 
 bool Runtime::game_started() const noexcept {
     return game_started_;
+}
+
+const AssetManager& Runtime::assets() const noexcept {
+    return asset_manager_;
 }
 
 } // namespace gaming_runtime
