@@ -330,4 +330,11 @@ extern "C" void ANativeActivity_onCreate(
         state->running.store(false, std::memory_order_release);
         return;
     }
+
+    // Exercise the Android input path with standard touch and navigation keys.
+    state->host.map_key(AKEYCODE_DPAD_UP, 0);
+    state->host.map_key(AKEYCODE_DPAD_DOWN, 1);
+    state->host.map_key(AKEYCODE_DPAD_LEFT, 2);
+    state->host.map_key(AKEYCODE_DPAD_RIGHT, 3);
+    state->host.map_key(AKEYCODE_BUTTON_A, 4);
 }
