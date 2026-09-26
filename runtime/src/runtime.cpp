@@ -78,6 +78,8 @@ bool Runtime::load_game(const GamePackage& package) {
 
     game_ = package;
     frame_ = {};
+    game_started_ = false;
+    game_module_.reset();
     game_loaded_ = true;
     return true;
 }
@@ -157,6 +159,42 @@ bool Runtime::load_game_from_storage(
     return false;
 }
 
+bool Runtime::attach_game_module(std::unique_ptr<GameModule> module) {
+    if (!game_loaded_ || game_started_ || !module) {
+        return false;
+    }
+
+    game_module_ = std::move(module);
+    return true;
+}
+
+bool Runtime::start_game() {
+    if (!game_loaded_ || !can_run_locally() ||
+        game_started_ || !game_module_) {
+        return false;
+    }
+
+    if (!game_module_->initialize()) {
+        game_module_.reset();
+        return false;
+    }
+
+    game_started_ = true;
+    return true;
+}
+
+void Runtime::stop_game() {
+    if (!game_started_) {
+        return;
+    }
+
+    if (game_module_) {
+        game_module_->shutdown();
+    }
+
+    game_started_ = false;
+}
+
 bool Runtime::can_run_locally() const {
     if (!game_loaded_) {
         return false;
@@ -174,6 +212,13 @@ void Runtime::tick(double delta_seconds) {
 
     frame_.delta_seconds = clamped;
     ++frame_.frame_number;
+
+    if (game_started_ && game_module_) {
+        game_module_->update({
+            .frame_number = frame_.frame_number,
+            .delta_seconds = frame_.delta_seconds
+        });
+    }
 }
 
 const FrameState& Runtime::frame_state() const noexcept {
@@ -182,6 +227,10 @@ const FrameState& Runtime::frame_state() const noexcept {
 
 const GamePackage& Runtime::loaded_game() const noexcept {
     return game_;
+}
+
+bool Runtime::game_started() const noexcept {
+    return game_started_;
 }
 
 } // namespace gaming_runtime
