@@ -103,6 +103,10 @@ bool Runtime::load_game(const GamePackage& package) {
         package.estimated_memory_mb > (UINT64_MAX / (1024ULL * 1024ULL))
             ? UINT64_MAX
             : package.estimated_memory_mb * 1024ULL * 1024ULL;
+    if (estimated_bytes > memory_manager_.budget_bytes()) {
+        return false;
+    }
+
     memory_manager_.clear();
     if (!memory_manager_.reserve(estimated_bytes)) {
         return false;
