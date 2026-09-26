@@ -120,7 +120,7 @@ public:
     void shutdown() override;
 
     bool register_texture(std::uint32_t resource_id, Texture texture);
-    bool unregister_texture(std::uint32_t resource_id);
+    bool unregister_texture(std::uint32_t resource_id) override;
     std::uint64_t memory_bytes() const noexcept override;
     FramebufferView framebuffer() const noexcept override;
     bool has_texture(std::uint32_t resource_id) const noexcept;
