@@ -1,6 +1,7 @@
 #include "gaming_runtime/android_runtime_host.h"
 #include "gaming_runtime/game_module.h"
 #include "gaming_runtime/render.h"
+#include "gaming_runtime/audio.h"
 #include "gaming_runtime/runtime.h"
 
 #include <android/input.h>
@@ -49,6 +50,10 @@ public:
             220.0f,
             220.0f,
             0);
+
+        if (context.audio && context.frame_number % 120U == 1U) {
+            context.audio->play(1, 0.65f, false);
+        }
     }
 
     void shutdown() override {}
@@ -203,6 +208,19 @@ void native_window_created(ANativeActivity* activity, ANativeWindow* window) {
         state->host.detach_surface();
         return;
     }
+
+#if defined(__ANDROID__)
+    {
+        auto audio = std::make_unique<AndroidAudio>();
+        if (!state->runtime.attach_audio(std::move(audio), 48000, 2)) {
+            auto fallback = std::make_unique<NullAudio>();
+            if (!state->runtime.attach_audio(std::move(fallback), 48000, 2)) {
+                state->host.detach_surface();
+                return;
+            }
+        }
+    }
+#endif
     if (!state->host.start()) {
         state->host.detach_surface();
         return;
