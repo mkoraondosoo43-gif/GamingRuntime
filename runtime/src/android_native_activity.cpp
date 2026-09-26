@@ -380,7 +380,7 @@ extern "C" void ANativeActivity_onCreate(
     }
 
     state->runtime.attach_game_module(
-        std::make_unique<AndroidDemoGame>(state->runtime));
+        std::make_unique<AndroidDemoGame>());
 
     state->frame_thread = std::thread(frame_loop, state);
 }
