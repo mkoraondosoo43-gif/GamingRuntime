@@ -203,6 +203,65 @@ int main() {
 
     assert(runtime.load_manifest((game / "game.json").string()));
     runtime.set_input_button(2, true);
+
+    // Strict manifest parsing: escaped strings are decoded and trailing garbage is rejected.
+    {
+        std::ofstream escaped(game / "game.json");
+        escaped << R"({
+            "format_version": 1,
+            "id": "demo\\.game",
+            "name": "Runtime \\"Demo\\"",
+            "version": "0.5.0",
+            "entry_point": "main",
+            "bytecode": "game.bc",
+            "assets": "assets",
+            "estimated_memory_mb": 128
+        })";
+    }
+    assert(runtime.load_manifest((game / "game.json").string()));
+    assert(runtime.loaded_game().id == "demo\\.game");
+    assert(runtime.loaded_game().name == "Runtime \"Demo\"");
+
+    {
+        std::ofstream malformed(game / "game.json");
+        malformed << "{\\\"format_version\\\":1,\\\"id\\\":\\\"bad\\\"} trailing";
+    }
+    assert(!runtime.load_manifest((game / "game.json").string()));
+    assert(runtime.loaded_game().id == "demo\\.game");
+
+    {
+        std::ofstream bad_bytecode(game / "bad.bc");
+        bad_bytecode << "NOT_AN_OPCODE\\n";
+        std::ofstream bad_manifest(game / "game.json");
+        bad_manifest << R"({
+            "format_version": 1,
+            "id": "bad.game",
+            "name": "Bad",
+            "version": "1",
+            "entry_point": "main",
+            "bytecode": "bad.bc",
+            "assets": "assets",
+            "estimated_memory_mb": 128
+        })";
+    }
+    assert(!runtime.load_manifest((game / "game.json").string()));
+    assert(runtime.loaded_game().id == "demo\\.game");
+
+    {
+        std::ofstream valid_manifest(game / "game.json");
+        valid_manifest << R"({
+            "format_version": 1,
+            "id": "demo.game",
+            "name": "Runtime Demo",
+            "version": "0.5.0",
+            "entry_point": "main",
+            "bytecode": "game.bc",
+            "assets": "assets",
+            "estimated_memory_mb": 128
+        })";
+    }
+    assert(runtime.load_manifest((game / "game.json").string()));
+    runtime.set_input_button(2, true);
     assert(runtime.memory().used_bytes() == 128ULL * 1024ULL * 1024ULL);
 
     auto renderer = std::make_unique<gaming_runtime::SoftwareRenderer>();
