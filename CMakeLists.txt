@@ -76,6 +76,14 @@ if(NOT ANDROID)
             gaming_runtime
     )
 
+    # Keep assertions enabled in test executables even for Release CI builds.
+    # The tests intentionally use assert() for validation, so NDEBUG must be unset.
+    target_compile_options(runtime_test PRIVATE -UNDEBUG)
+    target_compile_options(storage_test PRIVATE -UNDEBUG)
+    target_compile_options(entity_test PRIVATE -UNDEBUG)
+    target_compile_options(transform_test PRIVATE -UNDEBUG)
+    target_compile_options(renderable_test PRIVATE -UNDEBUG)
+
     enable_testing()
     add_test(NAME RuntimeCoreTest COMMAND runtime_test)
     add_test(NAME StorageTest COMMAND storage_test)
