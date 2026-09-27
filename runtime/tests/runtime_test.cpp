@@ -237,7 +237,7 @@ int main() {
         escaped << R"({
             "format_version": 1,
             "id": "demo\\.game",
-            "name": "Runtime \\"Demo\\"",
+            "name": "Runtime \"Demo\"",
             "version": "0.5.0",
             "entry_point": "main",
             "bytecode": "game.bc",
