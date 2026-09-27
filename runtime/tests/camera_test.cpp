@@ -34,6 +34,26 @@ int main() {
     assert(read_only->viewport_height == 720);
     assert(!read_only->active);
 
+    gaming_runtime::Transform camera_transform{};
+    camera_transform.position = {10.0f, 20.0f, 30.0f};
+    camera->active = true;
+
+    gaming_runtime::Vec3 screen_position{};
+    assert(gaming_runtime::CameraProjection::project_point(
+        *camera, camera_transform, {15.0f, 25.0f, 35.0f}, screen_position));
+    assert(screen_position.x == 650.0f);
+    assert(screen_position.y == 410.0f);
+    assert(screen_position.z == 5.0f);
+
+    camera->zoom = 0.0f;
+    assert(!gaming_runtime::CameraProjection::project_point(
+        *camera, camera_transform, {15.0f, 25.0f, 35.0f}, screen_position));
+
+    camera->zoom = 2.0f;
+    camera->viewport_width = 0;
+    assert(!gaming_runtime::CameraProjection::project_point(
+        *camera, camera_transform, {15.0f, 25.0f, 35.0f}, screen_position));
+
     assert(cameras.destroy(entity));
     assert(!cameras.has(entity));
     assert(cameras.count() == 0);
