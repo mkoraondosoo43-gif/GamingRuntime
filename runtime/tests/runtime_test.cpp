@@ -24,6 +24,12 @@ public:
         auto* transform = context.world->transform(entity);
         assert(transform != nullptr);
         transform->position = {4.0f, 5.0f, 6.0f};
+
+        auto* renderable = context.world->renderable(entity);
+        assert(renderable != nullptr);
+        assert(renderable->visible);
+        renderable->resource_id = 7;
+
         observed = true;
     }
 
