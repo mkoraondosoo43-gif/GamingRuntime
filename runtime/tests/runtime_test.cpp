@@ -516,6 +516,14 @@ int main() {
         {
             std::ofstream program(entity_program);
             program << "CREATE_ENTITY 0\n";
+            program << "PUSH 10000\n";
+            program << "PUSH 20000\n";
+            program << "PUSH 30000\n";
+            program << "SET_POSITION 0\n";
+            program << "PUSH 2000\n";
+            program << "PUSH 3000\n";
+            program << "PUSH 4000\n";
+            program << "SET_SCALE 0\n";
             program << "DESTROY_ENTITY 0\n";
             program << "HALT\n";
         }
