@@ -23,6 +23,8 @@ enum class BytecodeOp : std::uint8_t {
     StoreMemory,
     CreateEntity,
     DestroyEntity,
+    SetPosition,
+    SetScale,
     Halt
 };
 
