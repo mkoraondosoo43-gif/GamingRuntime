@@ -16,6 +16,7 @@
 #include "gaming_runtime/entity.h"
 #include "gaming_runtime/transform.h"
 #include "gaming_runtime/renderable.h"
+#include "gaming_runtime/camera.h"
 #include "gaming_runtime/world.h"
 
 namespace gaming_runtime {
@@ -108,6 +109,11 @@ public:
     std::size_t entity_count() const noexcept;
     Renderable* renderable(EntityId entity) noexcept;
     const Renderable* renderable(EntityId entity) const noexcept;
+    Camera* camera(EntityId entity) noexcept;
+    const Camera* camera(EntityId entity) const noexcept;
+    bool attach_camera(EntityId entity);
+    bool detach_camera(EntityId entity);
+    std::size_t camera_count() const noexcept;
 
 private:
     RuntimeConfig config_;
@@ -123,6 +129,7 @@ private:
     EntityManager entity_manager_;
     TransformManager transform_manager_;
     RenderableManager renderable_manager_;
+    CameraManager camera_manager_;
     GameWorld world_;
     std::unordered_map<std::uint32_t, std::uint64_t> texture_memory_;
     std::unique_ptr<Renderer> renderer_;
