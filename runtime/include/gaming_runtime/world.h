@@ -4,14 +4,15 @@
 #include "gaming_runtime/transform.h"
 #include "gaming_runtime/renderable.h"
 #include "gaming_runtime/render.h"
+#include "gaming_runtime/camera.h"
 
 namespace gaming_runtime {
 
 class GameWorld {
 public:
     GameWorld(EntityManager& entities, TransformManager& transforms,
-              RenderableManager& renderables)
-        : entities_(entities), transforms_(transforms), renderables_(renderables) {}
+              RenderableManager& renderables, CameraManager& cameras)
+        : entities_(entities), transforms_(transforms), renderables_(renderables), cameras_(cameras) {}
 
     EntityId create_entity() {
         const EntityId entity = entities_.create();
@@ -63,10 +64,31 @@ public:
         return entities_.is_alive(entity) ? renderables_.get(entity) : nullptr;
     }
 
+    Camera* camera(EntityId entity) noexcept {
+        return entities_.is_alive(entity) ? cameras_.get(entity) : nullptr;
+    }
+
+    const Camera* camera(EntityId entity) const noexcept {
+        return entities_.is_alive(entity) ? cameras_.get(entity) : nullptr;
+    }
+
+    bool attach_camera(EntityId entity) {
+        return entities_.is_alive(entity) && cameras_.create(entity);
+    }
+
+    bool detach_camera(EntityId entity) {
+        return entities_.is_alive(entity) && cameras_.destroy(entity);
+    }
+
+    std::size_t camera_count() const noexcept {
+        return cameras_.count();
+    }
+
 private:
     EntityManager& entities_;
     TransformManager& transforms_;
     RenderableManager& renderables_;
+    CameraManager& cameras_;
 };
 
 } // namespace gaming_runtime
