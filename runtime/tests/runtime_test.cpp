@@ -12,6 +12,27 @@
 #include <fstream>
 #include <vector>
 
+class WorldAwareGame final : public gaming_runtime::GameModule {
+public:
+    bool initialize() override { return true; }
+
+    void update(const gaming_runtime::GameFrameContext& context) override {
+        assert(context.world != nullptr);
+        entity = context.world->create_entity();
+        assert(entity != gaming_runtime::kInvalidEntity);
+
+        auto* transform = context.world->transform(entity);
+        assert(transform != nullptr);
+        transform->position = {4.0f, 5.0f, 6.0f};
+        observed = true;
+    }
+
+    void shutdown() override {}
+
+    gaming_runtime::EntityId entity = gaming_runtime::kInvalidEntity;
+    bool observed = false;
+};
+
 int main() {
     {
         gaming_runtime::MemoryManager memory(1);
@@ -533,8 +554,16 @@ int main() {
     }
 
     assert(runtime.load_bytecode_module(bytecode.string()));
+    auto world_module = std::make_unique<WorldAwareGame>();
+    auto* world_module_ptr = world_module.get();
+    assert(runtime.attach_game_module(std::move(world_module)));
     assert(runtime.start_game());
     runtime.tick(1.0 / 60.0);
+    assert(world_module_ptr->observed);
+    assert(runtime.entity_alive(world_module_ptr->entity));
+    const auto* world_transform = runtime.transform(world_module_ptr->entity);
+    assert(world_transform != nullptr);
+    assert(world_transform->position.z == 6.0f);
     runtime.stop_game();
 
     std::filesystem::remove_all(root);
