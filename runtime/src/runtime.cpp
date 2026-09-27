@@ -229,7 +229,7 @@ bool Runtime::load_game(const GamePackage& package) {
     }
 
     const auto relative_bytecode = std::filesystem::relative(
-        canonical_root, canonical_bytecode, error);
+        canonical_bytecode, canonical_root, error);
     if (error) {
         return false;
     }
@@ -423,7 +423,7 @@ bool Runtime::load_bytecode_module(const std::string& bytecode_path) {
     }
 
     const auto relative =
-        std::filesystem::relative(canonical_root, canonical_bytecode, error);
+        std::filesystem::relative(canonical_bytecode, canonical_root, error);
     if (error || relative.generic_string() == ".." ||
         relative.generic_string().rfind("../", 0) == 0 ||
         !std::filesystem::is_regular_file(canonical_bytecode, error) || error) {
