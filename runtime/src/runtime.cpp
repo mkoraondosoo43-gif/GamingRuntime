@@ -185,7 +185,7 @@ Runtime::Runtime(RuntimeConfig config)
       render_frame_(4096),
       memory_manager_(config.max_memory_mb),
       frame_scheduler_(config.target_fps),
-      world_(entity_manager_, transform_manager_, renderable_manager_) {}
+      world_(entity_manager_, transform_manager_, renderable_manager_, camera_manager_) {}
 
 bool Runtime::load_game(const GamePackage& package) {
     if (package.format_version != config_.supported_package_format ||
@@ -287,6 +287,7 @@ bool Runtime::load_game(const GamePackage& package) {
     entity_manager_ = EntityManager{};
     transform_manager_ = TransformManager{};
     renderable_manager_ = RenderableManager{};
+    camera_manager_ = CameraManager{};
     game_loaded_ = true;
     return true;
 }
@@ -978,3 +979,40 @@ const gaming_runtime::Renderable* gaming_runtime::Runtime::renderable(gaming_run
     }
     return renderable_manager_.get(entity);
 }
+
+
+namespace gaming_runtime {
+
+Camera* Runtime::camera(EntityId entity) noexcept {
+    if (!entity_manager_.is_alive(entity)) {
+        return nullptr;
+    }
+    return camera_manager_.get(entity);
+}
+
+const Camera* Runtime::camera(EntityId entity) const noexcept {
+    if (!entity_manager_.is_alive(entity)) {
+        return nullptr;
+    }
+    return camera_manager_.get(entity);
+}
+
+bool Runtime::attach_camera(EntityId entity) {
+    if (!game_loaded_ || !entity_manager_.is_alive(entity)) {
+        return false;
+    }
+    return camera_manager_.create(entity);
+}
+
+bool Runtime::detach_camera(EntityId entity) {
+    if (!game_loaded_ || !entity_manager_.is_alive(entity)) {
+        return false;
+    }
+    return camera_manager_.destroy(entity);
+}
+
+std::size_t Runtime::camera_count() const noexcept {
+    return camera_manager_.count();
+}
+
+} // namespace gaming_runtime
