@@ -21,6 +21,7 @@ add_library(gaming_runtime
     runtime/src/transform.cpp
     runtime/src/renderable.cpp
     runtime/src/world.cpp
+    runtime/src/camera.cpp
     $<$<PLATFORM_ID:Android>:runtime/src/android_surface_display.cpp>
     $<$<PLATFORM_ID:Android>:runtime/src/android_input.cpp>
     $<$<PLATFORM_ID:Android>:runtime/src/android_runtime_host.cpp>
@@ -77,6 +78,15 @@ if(NOT ANDROID)
             gaming_runtime
     )
 
+    add_executable(camera_test
+        runtime/tests/camera_test.cpp
+    )
+
+    target_link_libraries(camera_test
+        PRIVATE
+            gaming_runtime
+    )
+
     # Keep assertions enabled in test executables even for Release CI builds.
     # The tests intentionally use assert() for validation, so NDEBUG must be unset.
     target_compile_options(runtime_test PRIVATE -UNDEBUG)
@@ -84,6 +94,7 @@ if(NOT ANDROID)
     target_compile_options(entity_test PRIVATE -UNDEBUG)
     target_compile_options(transform_test PRIVATE -UNDEBUG)
     target_compile_options(renderable_test PRIVATE -UNDEBUG)
+    target_compile_options(camera_test PRIVATE -UNDEBUG)
 
     enable_testing()
     add_test(NAME RuntimeCoreTest COMMAND runtime_test)
@@ -91,6 +102,7 @@ if(NOT ANDROID)
     add_test(NAME EntityTest COMMAND entity_test)
     add_test(NAME TransformTest COMMAND transform_test)
     add_test(NAME RenderableTest COMMAND renderable_test)
+    add_test(NAME CameraTest COMMAND camera_test)
 endif()
 
 if(ANDROID)
