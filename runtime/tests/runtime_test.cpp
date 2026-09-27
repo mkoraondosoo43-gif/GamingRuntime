@@ -403,7 +403,7 @@ int main() {
         assert(checker_pixels[0] == 255);
         assert(checker_pixels[1] == 0);
         assert(checker_pixels[2] == 0);
-        const std::size_t green_pixel = (2U * 8U + 0U) * 4U;
+        const std::size_t green_pixel = (0U * 8U + 2U) * 4U;
         assert(checker_pixels[green_pixel] == 0);
         assert(checker_pixels[green_pixel + 1] == 255);
         assert(checker_pixels[green_pixel + 2] == 0);
