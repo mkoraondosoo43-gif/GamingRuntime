@@ -185,7 +185,7 @@ Runtime::Runtime(RuntimeConfig config)
       render_frame_(4096),
       memory_manager_(config.max_memory_mb),
       frame_scheduler_(config.target_fps),
-      world_(entity_manager_, transform_manager_) {}
+      world_(entity_manager_, transform_manager_, renderable_manager_) {}
 
 bool Runtime::load_game(const GamePackage& package) {
     if (package.format_version != config_.supported_package_format ||
@@ -286,6 +286,7 @@ bool Runtime::load_game(const GamePackage& package) {
     input_manager_.clear();
     entity_manager_ = EntityManager{};
     transform_manager_ = TransformManager{};
+    renderable_manager_ = RenderableManager{};
     game_loaded_ = true;
     return true;
 }
@@ -915,8 +916,12 @@ gaming_runtime::EntityId gaming_runtime::Runtime::create_entity() {
     }
 
     const EntityId entity = entity_manager_.create();
-    if (entity == kInvalidEntity || !transform_manager_.create(entity)) {
+    if (entity == kInvalidEntity ||
+        !transform_manager_.create(entity) ||
+        !renderable_manager_.create(entity)) {
         if (entity != kInvalidEntity) {
+            renderable_manager_.destroy(entity);
+            transform_manager_.destroy(entity);
             entity_manager_.destroy(entity);
         }
         return kInvalidEntity;
@@ -930,6 +935,7 @@ bool gaming_runtime::Runtime::destroy_entity(EntityId entity) {
         return false;
     }
 
+    renderable_manager_.destroy(entity);
     transform_manager_.destroy(entity);
     return entity_manager_.destroy(entity);
 }
@@ -956,4 +962,18 @@ const gaming_runtime::Transform* gaming_runtime::Runtime::transform(EntityId ent
 
 std::size_t gaming_runtime::Runtime::entity_count() const noexcept {
     return entity_manager_.alive_count();
+}
+
+gaming_runtime::Renderable* gaming_runtime::Runtime::renderable(gaming_runtime::EntityId entity) noexcept {
+    if (!entity_manager_.is_alive(entity)) {
+        return nullptr;
+    }
+    return renderable_manager_.get(entity);
+}
+
+const gaming_runtime::Renderable* gaming_runtime::Runtime::renderable(gaming_runtime::EntityId entity) const noexcept {
+    if (!entity_manager_.is_alive(entity)) {
+        return nullptr;
+    }
+    return renderable_manager_.get(entity);
 }
