@@ -506,6 +506,7 @@ void Runtime::tick(double delta_seconds) {
         context.audio = &audio_frame_;
         context.world = &world_;
         game_module_->update(context);
+        world_.render(render_frame_);
 
         if (renderer_ && renderer_started_) {
             renderer_->submit(render_frame_);
