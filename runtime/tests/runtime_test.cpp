@@ -622,6 +622,48 @@ int main() {
         assert(!runtime.destroy_entity(entity));
     }
 
+    {
+        gaming_runtime::EntityManager entities;
+        gaming_runtime::TransformManager transforms;
+        gaming_runtime::RenderableManager renderables;
+        gaming_runtime::CameraManager cameras;
+        gaming_runtime::GameWorld world(entities, transforms, renderables, cameras);
+
+        const auto camera_entity = world.create_entity();
+        const auto target_entity = world.create_entity();
+        assert(camera_entity != gaming_runtime::kInvalidEntity);
+        assert(target_entity != gaming_runtime::kInvalidEntity);
+
+        auto* camera_transform = world.transform(camera_entity);
+        auto* camera = world.camera(camera_entity);
+        auto* target_transform = world.transform(target_entity);
+        assert(camera_transform != nullptr);
+        assert(camera != nullptr);
+        assert(target_transform != nullptr);
+
+        camera_transform->position = {10.0f, 20.0f, 0.0f};
+        camera->zoom = 2.0f;
+        camera->viewport_width = 100;
+        camera->viewport_height = 80;
+
+        target_transform->position = {15.0f, 25.0f, 0.0f};
+        target_transform->scale = {4.0f, 6.0f, 1.0f};
+        world.renderable(target_entity)->resource_id = 9;
+
+        gaming_runtime::RenderFrame frame;
+        assert(world.render(frame) == 2);
+        assert(frame.size() == 2);
+
+        const auto& commands = frame.commands();
+        const auto& target_command = commands[1];
+        assert(target_command.type == gaming_runtime::RenderCommand::Type::DrawQuad);
+        assert(target_command.x == 60.0f);
+        assert(target_command.y == 50.0f);
+        assert(target_command.width == 8.0f);
+        assert(target_command.height == 12.0f);
+        assert(target_command.resource_id == 9);
+    }
+
     assert(runtime.load_bytecode_module(bytecode.string()));
     auto world_module = std::make_unique<WorldAwareGame>();
     auto* world_module_ptr = world_module.get();
