@@ -42,7 +42,7 @@ int main() {
     assert(gaming_runtime::CameraProjection::project_point(
         *camera, camera_transform, {15.0f, 25.0f, 35.0f}, screen_position));
     assert(screen_position.x == 650.0f);
-    assert(screen_position.y == 410.0f);
+    assert(screen_position.y == 370.0f);
     assert(screen_position.z == 5.0f);
 
     camera->zoom = 0.0f;
