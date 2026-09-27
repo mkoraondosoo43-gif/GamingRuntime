@@ -15,6 +15,7 @@
 #include "gaming_runtime/render.h"
 #include "gaming_runtime/entity.h"
 #include "gaming_runtime/transform.h"
+#include "gaming_runtime/renderable.h"
 #include "gaming_runtime/world.h"
 
 namespace gaming_runtime {
@@ -105,6 +106,8 @@ public:
     Transform* transform(EntityId entity) noexcept;
     const Transform* transform(EntityId entity) const noexcept;
     std::size_t entity_count() const noexcept;
+    Renderable* renderable(EntityId entity) noexcept;
+    const Renderable* renderable(EntityId entity) const noexcept;
 
 private:
     RuntimeConfig config_;
@@ -119,6 +122,7 @@ private:
     FrameScheduler frame_scheduler_;
     EntityManager entity_manager_;
     TransformManager transform_manager_;
+    RenderableManager renderable_manager_;
     GameWorld world_;
     std::unordered_map<std::uint32_t, std::uint64_t> texture_memory_;
     std::unique_ptr<Renderer> renderer_;
