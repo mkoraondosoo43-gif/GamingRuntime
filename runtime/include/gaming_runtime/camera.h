@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "gaming_runtime/entity.h"
+#include "gaming_runtime/transform.h"
 
 namespace gaming_runtime {
 
@@ -13,6 +14,13 @@ struct Camera {
     std::uint32_t viewport_width = 0;
     std::uint32_t viewport_height = 0;
     bool active = true;
+};
+
+struct CameraProjection {
+    static bool project_point(const Camera& camera,
+                              const Transform& camera_transform,
+                              const Vec3& world_position,
+                              Vec3& screen_position) noexcept;
 };
 
 class CameraManager {
