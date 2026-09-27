@@ -937,6 +937,7 @@ bool gaming_runtime::Runtime::destroy_entity(EntityId entity) {
         return false;
     }
 
+    camera_manager_.destroy(entity);
     renderable_manager_.destroy(entity);
     transform_manager_.destroy(entity);
     return entity_manager_.destroy(entity);
