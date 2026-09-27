@@ -21,6 +21,8 @@ enum class BytecodeOp : std::uint8_t {
     JumpIfZero,
     LoadMemory,
     StoreMemory,
+    CreateEntity,
+    DestroyEntity,
     Halt
 };
 
@@ -48,6 +50,7 @@ private:
     std::vector<BytecodeInstruction> program_;
     std::int64_t registers_[8]{};
     std::int64_t memory_[256]{};
+    EntityId entity_registers_[8]{};
     std::vector<std::int64_t> stack_;
     std::size_t instruction_pointer_ = 0;
     bool initialized_ = false;
