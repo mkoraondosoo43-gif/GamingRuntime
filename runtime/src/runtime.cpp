@@ -184,7 +184,8 @@ Runtime::Runtime(RuntimeConfig config)
     : config_(config),
       render_frame_(4096),
       memory_manager_(config.max_memory_mb),
-      frame_scheduler_(config.target_fps) {}
+      frame_scheduler_(config.target_fps),
+      world_(entity_manager_, transform_manager_) {}
 
 bool Runtime::load_game(const GamePackage& package) {
     if (package.format_version != config_.supported_package_format ||
@@ -502,6 +503,7 @@ void Runtime::tick(double delta_seconds) {
         context.input = &input_manager_.state();
         context.render = &render_frame_;
         context.audio = &audio_frame_;
+        context.world = &world_;
         game_module_->update(context);
 
         if (renderer_ && renderer_started_) {
