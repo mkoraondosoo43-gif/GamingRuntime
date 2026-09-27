@@ -180,6 +180,34 @@ bool manifest_string(
 
 } // namespace
 
+void Runtime::sync_camera_viewports() noexcept {
+    std::uint32_t width = 0;
+    std::uint32_t height = 0;
+
+    if (display_ && display_started_) {
+        width = display_->width();
+        height = display_->height();
+    } else if (renderer_ && renderer_started_) {
+        const FramebufferView framebuffer = renderer_->framebuffer();
+        if (framebuffer.valid()) {
+            width = framebuffer.width;
+            height = framebuffer.height;
+        }
+    }
+
+    if (width == 0 || height == 0) {
+        return;
+    }
+
+    for (const EntityId entity : entity_manager_.alive_entities()) {
+        Camera* camera = camera_manager_.get(entity);
+        if (camera != nullptr) {
+            camera->viewport_width = width;
+            camera->viewport_height = height;
+        }
+    }
+}
+
 Runtime::Runtime(RuntimeConfig config)
     : config_(config),
       render_frame_(4096),
@@ -592,6 +620,7 @@ bool Runtime::attach_renderer(std::unique_ptr<Renderer> renderer,
         return false;
     }
 
+    sync_camera_viewports();
     return true;
 }
 
@@ -686,6 +715,7 @@ bool Runtime::attach_display(std::unique_ptr<DisplayBackend> display,
         return false;
     }
 
+    sync_camera_viewports();
     return true;
 }
 
@@ -784,6 +814,7 @@ bool Runtime::resize_display(std::uint32_t width, std::uint32_t height) {
         memory_manager_.release(old_display_bytes - new_display_bytes);
     }
     display_memory_bytes_ = new_display_bytes;
+    sync_camera_viewports();
     return true;
 }
 
@@ -1002,7 +1033,11 @@ bool Runtime::attach_camera(EntityId entity) {
     if (!game_loaded_ || !entity_manager_.is_alive(entity)) {
         return false;
     }
-    return camera_manager_.create(entity);
+    if (!camera_manager_.create(entity)) {
+        return false;
+    }
+    sync_camera_viewports();
+    return true;
 }
 
 bool Runtime::detach_camera(EntityId entity) {
