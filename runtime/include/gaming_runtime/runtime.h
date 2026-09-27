@@ -13,6 +13,8 @@
 #include "gaming_runtime/memory.h"
 #include "gaming_runtime/frame_scheduler.h"
 #include "gaming_runtime/render.h"
+#include "gaming_runtime/entity.h"
+#include "gaming_runtime/transform.h"
 
 namespace gaming_runtime {
 
@@ -94,6 +96,13 @@ public:
     const MemoryManager& memory() const noexcept;
     const FrameScheduler& frame_scheduler() const noexcept;
 
+    EntityId create_entity();
+    bool destroy_entity(EntityId entity);
+    bool entity_alive(EntityId entity) const noexcept;
+    Transform* transform(EntityId entity) noexcept;
+    const Transform* transform(EntityId entity) const noexcept;
+    std::size_t entity_count() const noexcept;
+
 private:
     RuntimeConfig config_;
     GamePackage game_;
@@ -105,6 +114,8 @@ private:
     InputManager input_manager_;
     MemoryManager memory_manager_;
     FrameScheduler frame_scheduler_;
+    EntityManager entity_manager_;
+    TransformManager transform_manager_;
     std::unordered_map<std::uint32_t, std::uint64_t> texture_memory_;
     std::unique_ptr<Renderer> renderer_;
     std::uint64_t renderer_memory_bytes_ = 0;
