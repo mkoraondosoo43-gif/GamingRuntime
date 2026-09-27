@@ -509,6 +509,29 @@ int main() {
         module.shutdown();
     }
 
+    {
+        const auto entity = runtime.create_entity();
+        assert(entity != gaming_runtime::kInvalidEntity);
+        assert(runtime.entity_alive(entity));
+        assert(runtime.entity_count() == 1);
+
+        auto* transform = runtime.transform(entity);
+        assert(transform != nullptr);
+        transform->position = {10.0f, 20.0f, 30.0f};
+        transform->scale = {2.0f, 2.0f, 2.0f};
+
+        const auto* read_only = runtime.transform(entity);
+        assert(read_only != nullptr);
+        assert(read_only->position.y == 20.0f);
+        assert(read_only->scale.z == 2.0f);
+
+        assert(runtime.destroy_entity(entity));
+        assert(!runtime.entity_alive(entity));
+        assert(runtime.transform(entity) == nullptr);
+        assert(runtime.entity_count() == 0);
+        assert(!runtime.destroy_entity(entity));
+    }
+
     assert(runtime.load_bytecode_module(bytecode.string()));
     assert(runtime.start_game());
     runtime.tick(1.0 / 60.0);
