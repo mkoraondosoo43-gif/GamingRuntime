@@ -613,6 +613,7 @@ int main() {
     assert(runtime.start_game());
     runtime.tick(1.0 / 60.0);
     assert(world_module_ptr->observed);
+    assert(runtime.render_frame().size() == 1);
     assert(runtime.entity_alive(world_module_ptr->entity));
     const auto* world_transform = runtime.transform(world_module_ptr->entity);
     assert(world_transform != nullptr);
