@@ -127,9 +127,9 @@ int main() {
     assert(runtime.loaded_game().id == "demo.game");
     assert(runtime.loaded_game().version == "0.8.0");
     assert(runtime.loaded_game().root_directory ==
-           game.lexically_normal().string());
+           std::filesystem::weakly_canonical(game).string());
     assert(runtime.loaded_game().assets_directory ==
-           assets.lexically_normal().string());
+           std::filesystem::weakly_canonical(assets).string());
     assert(runtime.can_run_locally());
     assert(runtime.memory().used_bytes() == 128ULL * 1024ULL * 1024ULL);
     assert(runtime.memory().available_bytes() ==
