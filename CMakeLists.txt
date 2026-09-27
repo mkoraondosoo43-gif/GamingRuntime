@@ -20,6 +20,7 @@ add_library(gaming_runtime
     runtime/src/entity.cpp
     runtime/src/transform.cpp
     runtime/src/renderable.cpp
+    runtime/src/world.cpp
     $<$<PLATFORM_ID:Android>:runtime/src/android_surface_display.cpp>
     $<$<PLATFORM_ID:Android>:runtime/src/android_input.cpp>
     $<$<PLATFORM_ID:Android>:runtime/src/android_runtime_host.cpp>
