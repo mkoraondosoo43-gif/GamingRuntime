@@ -711,6 +711,8 @@ int main() {
 
         target_transform->position = {15.0f, 25.0f, 0.0f};
         target_transform->scale = {4.0f, 6.0f, 1.0f};
+        target_transform->rotation.z = 0.25f;
+        camera_transform->rotation.z = 0.1f;
         world.renderable(target_entity)->resource_id = 9;
 
         gaming_runtime::RenderFrame frame;
@@ -724,6 +726,7 @@ int main() {
         assert(target_command.y == 50.0f);
         assert(target_command.width == 8.0f);
         assert(target_command.height == 12.0f);
+        assert(target_command.rotation == 0.15f);
         assert(target_command.resource_id == 9);
     }
 
