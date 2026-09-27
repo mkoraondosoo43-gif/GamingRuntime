@@ -126,7 +126,7 @@ bool BytecodeGameModule::initialize() {
     return true;
 }
 
-void BytecodeGameModule::update(const GameFrameContext&) {
+void BytecodeGameModule::update(const GameFrameContext& context) {
     if (!initialized_ || halted_) {
         return;
     }
