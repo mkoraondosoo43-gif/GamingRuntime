@@ -3,7 +3,7 @@
 namespace gaming_runtime {
 
 bool TransformManager::create(EntityId entity) {
-    if (entity == kInvalidEntity || transforms_.contains(entity)) {
+    if (entity == kInvalidEntity || transforms_.find(entity) != transforms_.end()) {
         return false;
     }
 
