@@ -68,6 +68,16 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         out = {BytecodeOp::SetResource, value};
     } else if (op == "SET_VISIBLE") {
         out = {BytecodeOp::SetVisible, value};
+    } else if (op == "ATTACH_CAMERA") {
+        out = {BytecodeOp::AttachCamera, value};
+    } else if (op == "DETACH_CAMERA") {
+        out = {BytecodeOp::DetachCamera, value};
+    } else if (op == "SET_CAMERA_ZOOM") {
+        out = {BytecodeOp::SetCameraZoom, value};
+    } else if (op == "SET_CAMERA_VIEWPORT") {
+        out = {BytecodeOp::SetCameraViewport, value};
+    } else if (op == "SET_CAMERA_ACTIVE") {
+        out = {BytecodeOp::SetCameraActive, value};
     } else {
         return false;
     }
@@ -342,6 +352,101 @@ void BytecodeGameModule::update(const GameFrameContext& context) {
                 } else {
                     renderable->visible = value != 0;
                 }
+            }
+            break;
+
+        case BytecodeOp::AttachCamera:
+        case BytecodeOp::DetachCamera:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr ||
+                entity_registers_[instruction.operand] == kInvalidEntity) {
+                halted_ = true;
+                break;
+            }
+            if (instruction.op == BytecodeOp::AttachCamera) {
+                if (!context.world->attach_camera(
+                        entity_registers_[instruction.operand])) {
+                    halted_ = true;
+                }
+            } else {
+                if (!context.world->detach_camera(
+                        entity_registers_[instruction.operand])) {
+                    halted_ = true;
+                }
+            }
+            break;
+
+        case BytecodeOp::SetCameraZoom:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr ||
+                entity_registers_[instruction.operand] == kInvalidEntity ||
+                stack_.empty()) {
+                halted_ = true;
+                break;
+            }
+            {
+                auto* camera = context.world->camera(
+                    entity_registers_[instruction.operand]);
+                if (camera == nullptr) {
+                    halted_ = true;
+                    break;
+                }
+                const auto value = stack_.back();
+                stack_.pop_back();
+                if (value <= 0) {
+                    halted_ = true;
+                    break;
+                }
+                camera->zoom = static_cast<float>(value) / 1000.0f;
+            }
+            break;
+
+        case BytecodeOp::SetCameraViewport:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr ||
+                entity_registers_[instruction.operand] == kInvalidEntity ||
+                stack_.size() < 2) {
+                halted_ = true;
+                break;
+            }
+            {
+                auto* camera = context.world->camera(
+                    entity_registers_[instruction.operand]);
+                if (camera == nullptr) {
+                    halted_ = true;
+                    break;
+                }
+                const auto width = stack_[stack_.size() - 2];
+                const auto height = stack_[stack_.size() - 1];
+                stack_.resize(stack_.size() - 2);
+                if (width <= 0 || height <= 0 ||
+                    static_cast<std::uint64_t>(width) > UINT32_MAX ||
+                    static_cast<std::uint64_t>(height) > UINT32_MAX) {
+                    halted_ = true;
+                    break;
+                }
+                camera->viewport_width = static_cast<std::uint32_t>(width);
+                camera->viewport_height = static_cast<std::uint32_t>(height);
+            }
+            break;
+
+        case BytecodeOp::SetCameraActive:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr ||
+                entity_registers_[instruction.operand] == kInvalidEntity ||
+                stack_.empty()) {
+                halted_ = true;
+                break;
+            }
+            {
+                auto* camera = context.world->camera(
+                    entity_registers_[instruction.operand]);
+                if (camera == nullptr) {
+                    halted_ = true;
+                    break;
+                }
+                camera->active = stack_.back() != 0;
+                stack_.pop_back();
             }
             break;
 
