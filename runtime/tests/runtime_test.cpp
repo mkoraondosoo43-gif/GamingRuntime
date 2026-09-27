@@ -633,6 +633,8 @@ int main() {
         const auto target_entity = world.create_entity();
         assert(camera_entity != gaming_runtime::kInvalidEntity);
         assert(target_entity != gaming_runtime::kInvalidEntity);
+        assert(world.attach_camera(camera_entity));
+        assert(world.camera_count() == 1);
 
         auto* camera_transform = world.transform(camera_entity);
         auto* camera = world.camera(camera_entity);
