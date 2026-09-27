@@ -59,6 +59,7 @@ struct RenderCommand {
     float y = 0.0f;
     float width = 0.0f;
     float height = 0.0f;
+    float rotation = 0.0f;
     std::uint32_t resource_id = 0;
 };
 
@@ -69,7 +70,7 @@ public:
     void reset();
     bool clear(Color color);
     bool draw_quad(float x, float y, float width, float height,
-                   std::uint32_t resource_id = 0);
+                   std::uint32_t resource_id = 0, float rotation = 0.0f);
     const std::vector<RenderCommand>& commands() const noexcept;
     std::size_t size() const noexcept;
     std::size_t capacity() const noexcept;
