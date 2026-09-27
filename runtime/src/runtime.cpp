@@ -901,6 +901,14 @@ const gaming_runtime::FrameScheduler& gaming_runtime::Runtime::frame_scheduler()
     return frame_scheduler_;
 }
 
+gaming_runtime::GameWorld& gaming_runtime::Runtime::world() noexcept {
+    return world_;
+}
+
+const gaming_runtime::GameWorld& gaming_runtime::Runtime::world() const noexcept {
+    return world_;
+}
+
 gaming_runtime::EntityId gaming_runtime::Runtime::create_entity() {
     if (!game_loaded_) {
         return kInvalidEntity;
