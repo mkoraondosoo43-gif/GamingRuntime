@@ -27,6 +27,11 @@ enum class BytecodeOp : std::uint8_t {
     SetScale,
     SetResource,
     SetVisible,
+    AttachCamera,
+    DetachCamera,
+    SetCameraZoom,
+    SetCameraViewport,
+    SetCameraActive,
     Halt
 };
 
