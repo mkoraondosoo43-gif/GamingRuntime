@@ -18,6 +18,7 @@ public:
     bool destroy(EntityId entity);
     bool is_alive(EntityId entity) const noexcept;
     std::size_t alive_count() const noexcept;
+    std::vector<EntityId> alive_entities() const;
 
 private:
     static std::uint32_t index_from_id(EntityId entity) noexcept;
