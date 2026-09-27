@@ -512,6 +512,30 @@ int main() {
     }
 
     {
+        const std::filesystem::path entity_program = game / "entity.bc";
+        {
+            std::ofstream program(entity_program);
+            program << "CREATE_ENTITY 0\n";
+            program << "DESTROY_ENTITY 0\n";
+            program << "HALT\n";
+        }
+
+        gaming_runtime::EntityManager entities;
+        gaming_runtime::TransformManager transforms;
+        gaming_runtime::GameWorld world(entities, transforms);
+        gaming_runtime::BytecodeGameModule module(entity_program.string());
+        assert(module.initialize());
+
+        gaming_runtime::GameFrameContext context;
+        context.world = &world;
+        module.update(context);
+
+        assert(world.entity_count() == 0);
+        assert(module.halted());
+        module.shutdown();
+    }
+
+    {
         const std::filesystem::path memory_program = game / "memory.bc";
         {
             std::ofstream program(memory_program);
