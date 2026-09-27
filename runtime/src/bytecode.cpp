@@ -33,6 +33,10 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         return true;
     }
 
+    if (op == "ADD") { out = {BytecodeOp::Add, 0}; return true; }
+    if (op == "SUB") { out = {BytecodeOp::Subtract, 0}; return true; }
+    if (op == "MUL") { out = {BytecodeOp::Multiply, 0}; return true; }
+
     std::int64_t value = 0;
     if (!(input >> value)) {
         return false;
@@ -40,12 +44,6 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
 
     if (op == "PUSH") {
         out = {BytecodeOp::Push, value};
-    } else if (op == "ADD") {
-        out = {BytecodeOp::Add, 0};
-    } else if (op == "SUB") {
-        out = {BytecodeOp::Subtract, 0};
-    } else if (op == "MUL") {
-        out = {BytecodeOp::Multiply, 0};
     } else if (op == "SET") {
         out = {BytecodeOp::Set, value};
     } else if (op == "GET") {
