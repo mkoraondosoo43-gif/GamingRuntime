@@ -36,6 +36,7 @@ int main() {
 
     gaming_runtime::Transform camera_transform{};
     camera_transform.position = {10.0f, 20.0f, 30.0f};
+    camera_transform.rotation.z = 0.0f;
     camera->active = true;
 
     gaming_runtime::Vec3 screen_position{};
@@ -45,6 +46,14 @@ int main() {
     assert(screen_position.y == 370.0f);
     assert(screen_position.z == 5.0f);
 
+    camera_transform.rotation.z = 1.57079632679f;
+    assert(gaming_runtime::CameraProjection::project_point(
+        *camera, camera_transform, {15.0f, 25.0f, 35.0f}, screen_position));
+    assert(screen_position.x == 630.0f);
+    assert(screen_position.y == 350.0f);
+    assert(screen_position.z == 5.0f);
+
+    camera_transform.rotation.z = 0.0f;
     camera->zoom = 0.0f;
     assert(!gaming_runtime::CameraProjection::project_point(
         *camera, camera_transform, {15.0f, 25.0f, 35.0f}, screen_position));
