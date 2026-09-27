@@ -403,9 +403,10 @@ int main() {
         assert(checker_pixels[0] == 255);
         assert(checker_pixels[1] == 0);
         assert(checker_pixels[2] == 0);
-        assert(checker_pixels[4 * 4] == 0);
-        assert(checker_pixels[4 * 4 + 1] == 255);
-        assert(checker_pixels[4 * 4 + 2] == 0);
+        const std::size_t green_pixel = (2U * 8U + 0U) * 4U;
+        assert(checker_pixels[green_pixel] == 0);
+        assert(checker_pixels[green_pixel + 1] == 255);
+        assert(checker_pixels[green_pixel + 2] == 0);
 
         assert(runtime.load_texture_asset(12, "textures/tiny.rgba", 1, 1));
         assert(runtime.memory().used_bytes() ==
