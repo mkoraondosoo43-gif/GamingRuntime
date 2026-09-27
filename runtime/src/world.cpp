@@ -3,10 +3,12 @@
 namespace gaming_runtime {
 
 std::size_t GameWorld::render(RenderFrame& frame) const {
+    const auto entities = entities_.alive_entities();
+
     const Camera* active_camera = nullptr;
     const Transform* camera_transform = nullptr;
 
-    for (const EntityId entity : entities_.alive_entities()) {
+    for (const EntityId entity : entities) {
         const Camera* camera = cameras_.get(entity);
         const Transform* transform = transforms_.get(entity);
         if (camera != nullptr && camera->active &&
@@ -21,7 +23,7 @@ std::size_t GameWorld::render(RenderFrame& frame) const {
     }
 
     std::size_t submitted = 0;
-    for (const EntityId entity : entities_.alive_entities()) {
+    for (const EntityId entity : entities) {
         const Transform* transform = transforms_.get(entity);
         const Renderable* renderable = renderables_.get(entity);
         if (transform == nullptr || renderable == nullptr || !renderable->visible) {
@@ -36,8 +38,7 @@ std::size_t GameWorld::render(RenderFrame& frame) const {
             continue;
         }
 
-        if (active_camera != nullptr && camera_transform != nullptr &&
-            entity != entities_.alive_entities().front()) {
+        if (active_camera != nullptr && camera_transform != nullptr) {
             x = (x - camera_transform->position.x) * active_camera->zoom +
                 static_cast<float>(active_camera->viewport_width) * 0.5f;
             y = (y - camera_transform->position.y) * active_camera->zoom +
