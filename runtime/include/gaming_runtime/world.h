@@ -3,6 +3,7 @@
 #include "gaming_runtime/entity.h"
 #include "gaming_runtime/transform.h"
 #include "gaming_runtime/renderable.h"
+#include "gaming_runtime/render.h"
 
 namespace gaming_runtime {
 
@@ -51,6 +52,8 @@ public:
     std::size_t entity_count() const noexcept {
         return entities_.alive_count();
     }
+
+    std::size_t render(RenderFrame& frame) const;
 
     Renderable* renderable(EntityId entity) noexcept {
         return entities_.is_alive(entity) ? renderables_.get(entity) : nullptr;
