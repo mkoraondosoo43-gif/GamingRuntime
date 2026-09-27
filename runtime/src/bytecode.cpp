@@ -62,6 +62,10 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         out = {BytecodeOp::CreateEntity, value};
     } else if (op == "DESTROY_ENTITY") {
         out = {BytecodeOp::DestroyEntity, value};
+    } else if (op == "SET_POSITION") {
+        out = {BytecodeOp::SetPosition, value};
+    } else if (op == "SET_SCALE") {
+        out = {BytecodeOp::SetScale, value};
     } else {
         return false;
     }
@@ -274,6 +278,35 @@ void BytecodeGameModule::update(const GameFrameContext&) {
                 break;
             }
             entity_registers_[instruction.operand] = kInvalidEntity;
+            break;
+
+        case BytecodeOp::SetPosition:
+        case BytecodeOp::SetScale:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr ||
+                entity_registers_[instruction.operand] == kInvalidEntity ||
+                stack_.size() < 3) {
+                halted_ = true;
+                break;
+            }
+            {
+                auto* transform =
+                    context.world->transform(entity_registers_[instruction.operand]);
+                if (transform == nullptr) {
+                    halted_ = true;
+                    break;
+                }
+                const float x = static_cast<float>(stack_[stack_.size() - 3]) / 1000.0f;
+                const float y = static_cast<float>(stack_[stack_.size() - 2]) / 1000.0f;
+                const float z = static_cast<float>(stack_[stack_.size() - 1]) / 1000.0f;
+                stack_.resize(stack_.size() - 3);
+
+                if (instruction.op == BytecodeOp::SetPosition) {
+                    transform->position = {x, y, z};
+                } else {
+                    transform->scale = {x, y, z};
+                }
+            }
             break;
 
         case BytecodeOp::Halt:
