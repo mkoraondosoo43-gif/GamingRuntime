@@ -25,6 +25,8 @@ enum class BytecodeOp : std::uint8_t {
     DestroyEntity,
     SetPosition,
     SetScale,
+    SetResource,
+    SetVisible,
     Halt
 };
 
