@@ -61,6 +61,17 @@ std::size_t EntityManager::alive_count() const noexcept {
     return alive_count_;
 }
 
+std::vector<EntityId> EntityManager::alive_entities() const {
+    std::vector<EntityId> result;
+    result.reserve(alive_count_);
+    for (std::size_t index = 0; index < alive_.size(); ++index) {
+        if (alive_[index]) {
+            result.push_back(make_id(static_cast<std::uint32_t>(index), generations_[index]));
+        }
+    }
+    return result;
+}
+
 std::uint32_t EntityManager::index_from_id(EntityId entity) noexcept {
     return static_cast<std::uint32_t>(entity & 0xffffffffULL);
 }
