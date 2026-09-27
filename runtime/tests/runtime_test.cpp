@@ -530,13 +530,18 @@ int main() {
             program << "PUSH 3000\n";
             program << "PUSH 4000\n";
             program << "SET_SCALE 0\n";
+            program << "PUSH 7\n";
+            program << "SET_RESOURCE 0\n";
+            program << "PUSH 0\n";
+            program << "SET_VISIBLE 0\n";
             program << "DESTROY_ENTITY 0\n";
             program << "HALT\n";
         }
 
         gaming_runtime::EntityManager entities;
         gaming_runtime::TransformManager transforms;
-        gaming_runtime::GameWorld world(entities, transforms);
+        gaming_runtime::RenderableManager renderables;
+        gaming_runtime::GameWorld world(entities, transforms, renderables);
         gaming_runtime::BytecodeGameModule module(entity_program.string());
         assert(module.initialize());
 
