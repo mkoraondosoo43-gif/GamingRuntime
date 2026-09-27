@@ -283,6 +283,8 @@ bool Runtime::load_game(const GamePackage& package) {
     display_memory_bytes_ = 0;
     display_started_ = false;
     input_manager_.clear();
+    entity_manager_ = EntityManager{};
+    transform_manager_ = TransformManager{};
     game_loaded_ = true;
     return true;
 }
@@ -895,4 +897,53 @@ const gaming_runtime::MemoryManager& gaming_runtime::Runtime::memory() const noe
 
 const gaming_runtime::FrameScheduler& gaming_runtime::Runtime::frame_scheduler() const noexcept {
     return frame_scheduler_;
+}
+
+gaming_runtime::EntityId gaming_runtime::Runtime::create_entity() {
+    if (!game_loaded_) {
+        return kInvalidEntity;
+    }
+
+    const EntityId entity = entity_manager_.create();
+    if (entity == kInvalidEntity || !transform_manager_.create(entity)) {
+        if (entity != kInvalidEntity) {
+            entity_manager_.destroy(entity);
+        }
+        return kInvalidEntity;
+    }
+
+    return entity;
+}
+
+bool gaming_runtime::Runtime::destroy_entity(EntityId entity) {
+    if (!entity_manager_.is_alive(entity)) {
+        return false;
+    }
+
+    transform_manager_.destroy(entity);
+    return entity_manager_.destroy(entity);
+}
+
+bool gaming_runtime::Runtime::entity_alive(EntityId entity) const noexcept {
+    return entity_manager_.is_alive(entity);
+}
+
+gaming_runtime::Transform* gaming_runtime::Runtime::transform(EntityId entity) noexcept {
+    if (!entity_manager_.is_alive(entity)) {
+        return nullptr;
+    }
+
+    return transform_manager_.get(entity);
+}
+
+const gaming_runtime::Transform* gaming_runtime::Runtime::transform(EntityId entity) const noexcept {
+    if (!entity_manager_.is_alive(entity)) {
+        return nullptr;
+    }
+
+    return transform_manager_.get(entity);
+}
+
+std::size_t gaming_runtime::Runtime::entity_count() const noexcept {
+    return entity_manager_.alive_count();
 }
