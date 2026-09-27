@@ -5,6 +5,7 @@
 #include "gaming_runtime/audio.h"
 #include "gaming_runtime/input.h"
 #include "gaming_runtime/render.h"
+#include "gaming_runtime/world.h"
 
 namespace gaming_runtime {
 
@@ -14,6 +15,7 @@ struct GameFrameContext {
     const InputState* input = nullptr;
     RenderFrame* render = nullptr;
     AudioFrame* audio = nullptr;
+    GameWorld* world = nullptr;
 };
 
 class GameModule {
