@@ -585,6 +585,44 @@ int main() {
     }
 
     {
+        const std::filesystem::path camera_program = game / "camera.bc";
+        {
+            std::ofstream program(camera_program);
+            program << "CREATE_ENTITY 0\\n";
+            program << "ATTACH_CAMERA 0\\n";
+            program << "PUSH 2000\\n";
+            program << "SET_CAMERA_ZOOM 0\\n";
+            program << "PUSH 1280\\n";
+            program << "PUSH 720\\n";
+            program << "SET_CAMERA_VIEWPORT 0\\n";
+            program << "PUSH 0\\n";
+            program << "SET_CAMERA_ACTIVE 0\\n";
+            program << "PUSH 1\\n";
+            program << "SET_CAMERA_ACTIVE 0\\n";
+            program << "DETACH_CAMERA 0\\n";
+            program << "DESTROY_ENTITY 0\\n";
+            program << "HALT\\n";
+        }
+
+        gaming_runtime::EntityManager entities;
+        gaming_runtime::TransformManager transforms;
+        gaming_runtime::RenderableManager renderables;
+        gaming_runtime::CameraManager cameras;
+        gaming_runtime::GameWorld world(entities, transforms, renderables, cameras);
+        gaming_runtime::BytecodeGameModule module(camera_program.string());
+        assert(module.initialize());
+
+        gaming_runtime::GameFrameContext context;
+        context.world = &world;
+        module.update(context);
+
+        assert(world.entity_count() == 0);
+        assert(world.camera_count() == 0);
+        assert(module.halted());
+        module.shutdown();
+    }
+
+    {
         const auto entity = runtime.create_entity();
         assert(entity != gaming_runtime::kInvalidEntity);
         assert(runtime.entity_alive(entity));
