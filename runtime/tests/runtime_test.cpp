@@ -611,20 +611,20 @@ int main() {
         const std::filesystem::path camera_program = game / "camera.bc";
         {
             std::ofstream program(camera_program);
-            program << "CREATE_ENTITY 0\\n";
-            program << "ATTACH_CAMERA 0\\n";
-            program << "PUSH 2000\\n";
-            program << "SET_CAMERA_ZOOM 0\\n";
-            program << "PUSH 1280\\n";
-            program << "PUSH 720\\n";
-            program << "SET_CAMERA_VIEWPORT 0\\n";
-            program << "PUSH 0\\n";
-            program << "SET_CAMERA_ACTIVE 0\\n";
-            program << "PUSH 1\\n";
-            program << "SET_CAMERA_ACTIVE 0\\n";
-            program << "DETACH_CAMERA 0\\n";
-            program << "DESTROY_ENTITY 0\\n";
-            program << "HALT\\n";
+            program << "CREATE_ENTITY 0\n";
+            program << "ATTACH_CAMERA 0\n";
+            program << "PUSH 2000\n";
+            program << "SET_CAMERA_ZOOM 0\n";
+            program << "PUSH 1280\n";
+            program << "PUSH 720\n";
+            program << "SET_CAMERA_VIEWPORT 0\n";
+            program << "PUSH 0\n";
+            program << "SET_CAMERA_ACTIVE 0\n";
+            program << "PUSH 1\n";
+            program << "SET_CAMERA_ACTIVE 0\n";
+            program << "DETACH_CAMERA 0\n";
+            program << "DESTROY_ENTITY 0\n";
+            program << "HALT\n";
         }
 
         gaming_runtime::EntityManager entities;
