@@ -56,7 +56,7 @@ bool AssetManager::resolve_asset(const std::string& relative_path,
     }
 
     const auto relative = std::filesystem::relative(
-        canonical_root, canonical_candidate, error);
+        canonical_candidate, canonical_root, error);
     if (error) {
         return false;
     }
@@ -135,7 +135,7 @@ std::vector<AssetInfo> AssetManager::list_assets() const {
             continue;
         }
 
-        const auto relative = std::filesystem::relative(root, it->path(), error);
+        const auto relative = std::filesystem::relative(it->path(), root, error);
         if (error) {
             continue;
         }
