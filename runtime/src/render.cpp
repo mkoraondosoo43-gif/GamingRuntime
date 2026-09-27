@@ -300,15 +300,17 @@ void SoftwareRenderer::draw_quad(const RenderCommand& command) {
                            std::fabs(half_height * sine);
     const float extent_y = std::fabs(half_width * sine) +
                            std::fabs(half_height * cosine);
+    const float center_x = command.x + half_width;
+    const float center_y = command.y + half_height;
 
-    const int left = std::max(0, static_cast<int>(std::floor(command.x - extent_x)));
-    const int top = std::max(0, static_cast<int>(std::floor(command.y - extent_y)));
+    const int left = std::max(0, static_cast<int>(std::floor(center_x - extent_x)));
+    const int top = std::max(0, static_cast<int>(std::floor(center_y - extent_y)));
     const int right = std::min(
         static_cast<int>(width_),
-        static_cast<int>(std::ceil(command.x + extent_x)));
+        static_cast<int>(std::ceil(center_x + extent_x)));
     const int bottom = std::min(
         static_cast<int>(height_),
-        static_cast<int>(std::ceil(command.y + extent_y)));
+        static_cast<int>(std::ceil(center_y + extent_y)));
 
     if (right <= left || bottom <= top) {
         return;
@@ -344,8 +346,8 @@ void SoftwareRenderer::draw_quad(const RenderCommand& command) {
 
     for (int y = top; y < bottom; ++y) {
         for (int x = left; x < right; ++x) {
-            const float dx = static_cast<float>(x) + 0.5f - command.x;
-            const float dy = static_cast<float>(y) + 0.5f - command.y;
+            const float dx = static_cast<float>(x) + 0.5f - center_x;
+            const float dy = static_cast<float>(y) + 0.5f - center_y;
             const float local_x = dx * cosine + dy * sine;
             const float local_y = -dx * sine + dy * cosine;
             if (std::fabs(local_x) > half_width ||
