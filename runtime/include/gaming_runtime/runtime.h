@@ -116,6 +116,7 @@ public:
     std::size_t camera_count() const noexcept;
 
 private:
+    void sync_camera_viewports() noexcept;
     RuntimeConfig config_;
     GamePackage game_;
     FrameState frame_;
