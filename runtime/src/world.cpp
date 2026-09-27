@@ -39,10 +39,14 @@ std::size_t GameWorld::render(RenderFrame& frame) const {
         }
 
         if (active_camera != nullptr && camera_transform != nullptr) {
-            x = (x - camera_transform->position.x) * active_camera->zoom +
-                static_cast<float>(active_camera->viewport_width) * 0.5f;
-            y = (y - camera_transform->position.y) * active_camera->zoom +
-                static_cast<float>(active_camera->viewport_height) * 0.5f;
+            Vec3 screen_position{};
+            if (!CameraProjection::project_point(
+                    *active_camera, *camera_transform,
+                    {x, y, transform->position.z}, screen_position)) {
+                continue;
+            }
+            x = screen_position.x;
+            y = screen_position.y;
             width *= active_camera->zoom;
             height *= active_camera->zoom;
         }
