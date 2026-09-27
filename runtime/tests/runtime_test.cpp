@@ -387,6 +387,29 @@ int main() {
     assert(module_ptr->shutdown_called);
 
     {
+        const auto camera_entity = runtime.create_entity();
+        assert(camera_entity != gaming_runtime::kInvalidEntity);
+        assert(runtime.attach_camera(camera_entity));
+        const auto* camera = runtime.camera(camera_entity);
+        assert(camera != nullptr);
+        assert(camera->viewport_width == 640);
+        assert(camera->viewport_height == 360);
+
+        assert(runtime.resize_display(320, 180));
+        camera = runtime.camera(camera_entity);
+        assert(camera != nullptr);
+        assert(camera->viewport_width == 320);
+        assert(camera->viewport_height == 180);
+
+        assert(runtime.resize_display(640, 360));
+        camera = runtime.camera(camera_entity);
+        assert(camera != nullptr);
+        assert(camera->viewport_width == 640);
+        assert(camera->viewport_height == 360);
+        assert(runtime.destroy_entity(camera_entity));
+    }
+
+    {
         auto software = std::make_unique<gaming_runtime::SoftwareRenderer>();
         auto* software_ptr = software.get();
         assert(runtime.attach_renderer(std::move(software), 8, 8));
