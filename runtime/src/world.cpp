@@ -34,6 +34,7 @@ std::size_t GameWorld::render(RenderFrame& frame) const {
         float y = transform->position.y;
         float width = transform->scale.x > 0.0f ? transform->scale.x : 0.0f;
         float height = transform->scale.y > 0.0f ? transform->scale.y : 0.0f;
+        float rotation = transform->rotation.z;
         if (width <= 0.0f || height <= 0.0f) {
             continue;
         }
@@ -49,9 +50,10 @@ std::size_t GameWorld::render(RenderFrame& frame) const {
             y = screen_position.y;
             width *= active_camera->zoom;
             height *= active_camera->zoom;
+            rotation -= camera_transform->rotation.z;
         }
 
-        if (!frame.draw_quad(x, y, width, height, renderable->resource_id)) {
+        if (!frame.draw_quad(x, y, width, height, renderable->resource_id, rotation)) {
             break;
         }
         ++submitted;
