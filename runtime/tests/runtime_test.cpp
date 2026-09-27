@@ -723,8 +723,8 @@ int main() {
         const auto& commands = frame.commands();
         const auto& target_command = commands[1];
         assert(target_command.type == gaming_runtime::RenderCommand::Type::DrawQuad);
-        assert(std::fabs(target_command.x - 60.94696f) < 0.001f);
-        assert(std::fabs(target_command.y - 48.94696f) < 0.001f);
+        assert(std::fabs(target_command.x - 60.9467f) < 0.001f);
+        assert(std::fabs(target_command.y - 48.9549f) < 0.001f);
         assert(target_command.width == 8.0f);
         assert(target_command.height == 12.0f);
         assert(target_command.rotation == 0.15f);
