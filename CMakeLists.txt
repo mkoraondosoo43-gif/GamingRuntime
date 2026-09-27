@@ -17,6 +17,7 @@ add_library(gaming_runtime
     runtime/src/frame_scheduler.cpp
     runtime/src/audio.cpp
     runtime/src/display.cpp
+    runtime/src/entity.cpp
     $<$<PLATFORM_ID:Android>:runtime/src/android_surface_display.cpp>
     $<$<PLATFORM_ID:Android>:runtime/src/android_input.cpp>
     $<$<PLATFORM_ID:Android>:runtime/src/android_runtime_host.cpp>
@@ -46,9 +47,19 @@ if(NOT ANDROID)
             gaming_runtime
     )
 
+    add_executable(entity_test
+        runtime/tests/entity_test.cpp
+    )
+
+    target_link_libraries(entity_test
+        PRIVATE
+            gaming_runtime
+    )
+
     enable_testing()
     add_test(NAME RuntimeCoreTest COMMAND runtime_test)
     add_test(NAME StorageTest COMMAND storage_test)
+    add_test(NAME EntityTest COMMAND entity_test)
 endif()
 
 if(ANDROID)
