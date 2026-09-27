@@ -58,6 +58,10 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         out = {BytecodeOp::LoadMemory, value};
     } else if (op == "STORE") {
         out = {BytecodeOp::StoreMemory, value};
+    } else if (op == "CREATE_ENTITY") {
+        out = {BytecodeOp::CreateEntity, value};
+    } else if (op == "DESTROY_ENTITY") {
+        out = {BytecodeOp::DestroyEntity, value};
     } else {
         return false;
     }
@@ -106,6 +110,7 @@ bool BytecodeGameModule::initialize() {
 
     std::fill(std::begin(registers_), std::end(registers_), 0);
     std::fill(std::begin(memory_), std::end(memory_), 0);
+    std::fill(std::begin(entity_registers_), std::end(entity_registers_), kInvalidEntity);
     stack_.clear();
     instruction_pointer_ = 0;
     halted_ = false;
@@ -239,6 +244,38 @@ void BytecodeGameModule::update(const GameFrameContext&) {
             stack_.pop_back();
             break;
 
+        case BytecodeOp::CreateEntity:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr) {
+                halted_ = true;
+                break;
+            }
+            {
+                const EntityId entity =
+                    context.world->create_entity();
+                if (entity == kInvalidEntity) {
+                    halted_ = true;
+                    break;
+                }
+                entity_registers_[instruction.operand] = entity;
+            }
+            break;
+
+        case BytecodeOp::DestroyEntity:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr ||
+                entity_registers_[instruction.operand] == kInvalidEntity) {
+                halted_ = true;
+                break;
+            }
+            if (!context.world->destroy_entity(
+                    entity_registers_[instruction.operand])) {
+                halted_ = true;
+                break;
+            }
+            entity_registers_[instruction.operand] = kInvalidEntity;
+            break;
+
         case BytecodeOp::Halt:
             halted_ = true;
             break;
@@ -252,6 +289,7 @@ void BytecodeGameModule::shutdown() {
     initialized_ = false;
     halted_ = true;
     stack_.clear();
+    std::fill(std::begin(entity_registers_), std::end(entity_registers_), kInvalidEntity);
     program_.clear();
 }
 
