@@ -551,7 +551,8 @@ int main() {
         gaming_runtime::EntityManager entities;
         gaming_runtime::TransformManager transforms;
         gaming_runtime::RenderableManager renderables;
-        gaming_runtime::GameWorld world(entities, transforms, renderables);
+        gaming_runtime::CameraManager cameras;
+        gaming_runtime::GameWorld world(entities, transforms, renderables, cameras);
         gaming_runtime::BytecodeGameModule module(entity_program.string());
         assert(module.initialize());
 
@@ -598,6 +599,21 @@ int main() {
         assert(read_only != nullptr);
         assert(read_only->position.y == 20.0f);
         assert(read_only->scale.z == 2.0f);
+
+        assert(runtime.attach_camera(entity));
+        assert(runtime.camera_count() == 1);
+        auto* camera = runtime.camera(entity);
+        assert(camera != nullptr);
+        assert(camera->zoom == 1.0f);
+        camera->zoom = 2.0f;
+        camera->viewport_width = 1280;
+        camera->viewport_height = 720;
+        assert(runtime.camera(entity)->zoom == 2.0f);
+        assert(runtime.camera(entity)->viewport_width == 1280);
+        assert(runtime.camera(entity)->viewport_height == 720);
+        assert(runtime.detach_camera(entity));
+        assert(runtime.camera_count() == 0);
+        assert(runtime.camera(entity) == nullptr);
 
         assert(runtime.destroy_entity(entity));
         assert(!runtime.entity_alive(entity));
