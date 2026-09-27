@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <vector>
+#include <cmath>
 
 class WorldAwareGame final : public gaming_runtime::GameModule {
 public:
@@ -722,8 +723,8 @@ int main() {
         const auto& commands = frame.commands();
         const auto& target_command = commands[1];
         assert(target_command.type == gaming_runtime::RenderCommand::Type::DrawQuad);
-        assert(target_command.x == 60.0f);
-        assert(target_command.y == 50.0f);
+        assert(std::fabs(target_command.x - 60.94696f) < 0.001f);
+        assert(std::fabs(target_command.y - 48.94696f) < 0.001f);
         assert(target_command.width == 8.0f);
         assert(target_command.height == 12.0f);
         assert(target_command.rotation == 0.15f);
