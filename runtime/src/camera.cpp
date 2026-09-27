@@ -1,5 +1,7 @@
 #include "gaming_runtime/camera.h"
 
+#include <cmath>
+
 namespace gaming_runtime {
 
 bool CameraManager::create(EntityId entity) {
@@ -41,11 +43,20 @@ bool CameraProjection::project_point(const Camera& camera,
         return false;
     }
 
+    const float dx = world_position.x - camera_transform.position.x;
+    const float dy = world_position.y - camera_transform.position.y;
+    const float angle = camera_transform.rotation.z;
+    const float cosine = std::cos(angle);
+    const float sine = std::sin(angle);
+
+    const float rotated_x = dx * cosine + dy * sine;
+    const float rotated_y = -dx * sine + dy * cosine;
+
     screen_position.x =
-        (world_position.x - camera_transform.position.x) * camera.zoom +
+        rotated_x * camera.zoom +
         static_cast<float>(camera.viewport_width) * 0.5f;
     screen_position.y =
-        (world_position.y - camera_transform.position.y) * camera.zoom +
+        rotated_y * camera.zoom +
         static_cast<float>(camera.viewport_height) * 0.5f;
     screen_position.z = world_position.z - camera_transform.position.z;
     return true;
