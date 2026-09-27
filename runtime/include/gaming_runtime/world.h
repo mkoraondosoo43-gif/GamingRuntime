@@ -33,6 +33,7 @@ public:
         if (!entities_.is_alive(entity)) {
             return false;
         }
+        cameras_.destroy(entity);
         renderables_.destroy(entity);
         transforms_.destroy(entity);
         return entities_.destroy(entity);
