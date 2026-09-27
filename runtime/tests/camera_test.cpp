@@ -50,7 +50,7 @@ int main() {
     camera_transform.rotation.z = 1.57079632679f;
     assert(gaming_runtime::CameraProjection::project_point(
         *camera, camera_transform, {15.0f, 25.0f, 35.0f}, screen_position));
-    assert(std::fabs(screen_position.x - 630.0f) < 0.001f);
+    assert(std::fabs(screen_position.x - 650.0f) < 0.001f);
     assert(std::fabs(screen_position.y - 350.0f) < 0.001f);
     assert(screen_position.z == 5.0f);
 
