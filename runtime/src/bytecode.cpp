@@ -66,6 +66,10 @@ bool parse_instruction(const std::string& line, BytecodeInstruction& out) {
         out = {BytecodeOp::SetPosition, value};
     } else if (op == "SET_SCALE") {
         out = {BytecodeOp::SetScale, value};
+    } else if (op == "SET_RESOURCE") {
+        out = {BytecodeOp::SetResource, value};
+    } else if (op == "SET_VISIBLE") {
+        out = {BytecodeOp::SetVisible, value};
     } else {
         return false;
     }
@@ -305,6 +309,40 @@ void BytecodeGameModule::update(const GameFrameContext&) {
                     transform->position = {x, y, z};
                 } else {
                     transform->scale = {x, y, z};
+                }
+            }
+            break;
+
+        case BytecodeOp::SetResource:
+        case BytecodeOp::SetVisible:
+            if (instruction.operand < 0 || instruction.operand >= 8 ||
+                context.world == nullptr ||
+                entity_registers_[instruction.operand] == kInvalidEntity ||
+                stack_.empty()) {
+                halted_ = true;
+                break;
+            }
+            {
+                auto* renderable =
+                    context.world->renderable(entity_registers_[instruction.operand]);
+                if (renderable == nullptr) {
+                    halted_ = true;
+                    break;
+                }
+
+                const auto value = stack_.back();
+                stack_.pop_back();
+
+                if (instruction.op == BytecodeOp::SetResource) {
+                    if (value < 0 ||
+                        static_cast<std::uint64_t>(value) > UINT32_MAX) {
+                        halted_ = true;
+                        break;
+                    }
+                    renderable->resource_id =
+                        static_cast<std::uint32_t>(value);
+                } else {
+                    renderable->visible = value != 0;
                 }
             }
             break;
