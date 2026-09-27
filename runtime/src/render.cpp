@@ -42,7 +42,7 @@ bool RenderFrame::clear(Color color) {
 }
 
 bool RenderFrame::draw_quad(float x, float y, float width, float height,
-                            std::uint32_t resource_id) {
+                            std::uint32_t resource_id, float rotation) {
     if (commands_.size() >= max_commands_ ||
         width < 0.0f || height < 0.0f) {
         return false;
@@ -54,6 +54,7 @@ bool RenderFrame::draw_quad(float x, float y, float width, float height,
     command.y = y;
     command.width = width;
     command.height = height;
+    command.rotation = rotation;
     command.resource_id = resource_id;
     commands_.push_back(command);
     return true;
@@ -290,14 +291,24 @@ void SoftwareRenderer::fill(Color color) {
 }
 
 void SoftwareRenderer::draw_quad(const RenderCommand& command) {
-    const int left = std::max(0, static_cast<int>(std::floor(command.x)));
-    const int top = std::max(0, static_cast<int>(std::floor(command.y)));
+    const float cosine = std::cos(command.rotation);
+    const float sine = std::sin(command.rotation);
+    const float half_width = command.width * 0.5f;
+    const float half_height = command.height * 0.5f;
+
+    const float extent_x = std::fabs(half_width * cosine) +
+                           std::fabs(half_height * sine);
+    const float extent_y = std::fabs(half_width * sine) +
+                           std::fabs(half_height * cosine);
+
+    const int left = std::max(0, static_cast<int>(std::floor(command.x - extent_x)));
+    const int top = std::max(0, static_cast<int>(std::floor(command.y - extent_y)));
     const int right = std::min(
         static_cast<int>(width_),
-        static_cast<int>(std::ceil(command.x + command.width)));
+        static_cast<int>(std::ceil(command.x + extent_x)));
     const int bottom = std::min(
         static_cast<int>(height_),
-        static_cast<int>(std::ceil(command.y + command.height)));
+        static_cast<int>(std::ceil(command.y + extent_y)));
 
     if (right <= left || bottom <= top) {
         return;
@@ -333,11 +344,20 @@ void SoftwareRenderer::draw_quad(const RenderCommand& command) {
 
     for (int y = top; y < bottom; ++y) {
         for (int x = left; x < right; ++x) {
+            const float dx = static_cast<float>(x) + 0.5f - command.x;
+            const float dy = static_cast<float>(y) + 0.5f - command.y;
+            const float local_x = dx * cosine + dy * sine;
+            const float local_y = -dx * sine + dy * cosine;
+            if (std::fabs(local_x) > half_width ||
+                std::fabs(local_y) > half_height) {
+                continue;
+            }
+
             const float u = command.width > 0.0f
-                ? (static_cast<float>(x) + 0.5f - command.x) / command.width
+                ? (local_x + half_width) / command.width
                 : 0.0f;
             const float v = command.height > 0.0f
-                ? (static_cast<float>(y) + 0.5f - command.y) / command.height
+                ? (local_y + half_height) / command.height
                 : 0.0f;
 
             const auto tx = static_cast<std::uint32_t>(
