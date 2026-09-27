@@ -395,6 +395,18 @@ int main() {
         assert(software_ptr->has_texture(12));
         assert(runtime.memory().used_bytes() ==
                memory_before_texture + 16ULL);
+        assert(runtime.render_frame().clear({0.0f, 0.0f, 0.0f, 1.0f}));
+        assert(runtime.render_frame().draw_quad(0.0f, 0.0f, 4.0f, 4.0f, 12));
+        assert(software_ptr->submit(runtime.render_frame()));
+
+        const auto& checker_pixels = software_ptr->pixels();
+        assert(checker_pixels[0] == 255);
+        assert(checker_pixels[1] == 0);
+        assert(checker_pixels[2] == 0);
+        assert(checker_pixels[4 * 4] == 0);
+        assert(checker_pixels[4 * 4 + 1] == 255);
+        assert(checker_pixels[4 * 4 + 2] == 0);
+
         assert(runtime.load_texture_asset(12, "textures/tiny.rgba", 1, 1));
         assert(runtime.memory().used_bytes() ==
                memory_before_texture + 4ULL);
@@ -402,13 +414,10 @@ int main() {
         assert(runtime.render_frame().draw_quad(0.0f, 0.0f, 4.0f, 4.0f, 12));
         assert(software_ptr->submit(runtime.render_frame()));
 
-        const auto& pixels = software_ptr->pixels();
-        assert(pixels[0] == 255);
-        assert(pixels[1] == 0);
-        assert(pixels[2] == 0);
-        assert(pixels[4 * 4] == 0);
-        assert(pixels[4 * 4 + 1] == 255);
-        assert(pixels[4 * 4 + 2] == 0);
+        const auto& tiny_pixels = software_ptr->pixels();
+        assert(tiny_pixels[0] == 255);
+        assert(tiny_pixels[1] == 0);
+        assert(tiny_pixels[2] == 0);
         assert(runtime.unload_texture(12));
         assert(!software_ptr->has_texture(12));
         assert(runtime.memory().used_bytes() == memory_before_texture);
