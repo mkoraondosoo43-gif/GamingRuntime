@@ -333,7 +333,7 @@ bool Runtime::load_manifest(const std::string& manifest_path) {
         std::error_code error;
         const auto canonical = std::filesystem::weakly_canonical(candidate, error);
         if (error) return false;
-        const auto relative = std::filesystem::relative(package_root, canonical, error);
+        const auto relative = std::filesystem::relative(canonical, package_root, error);
         if (error) return false;
         const auto text = relative.generic_string();
         return text != ".." && text.rfind("../", 0) != 0;
